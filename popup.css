@@ -13,7 +13,7 @@ body {
 }
 
 .app {
-    width: 400px;
+    width: 600px;
     min-height: 600px;
     background: white;
     border-radius: 12px;
@@ -979,10 +979,194 @@ body {
     color: #383d41;
 }
 
+/* 加密货币状态样式 */
+.market-status.crypto-active {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    color: #8b4513;
+    font-weight: 600;
+    border: 1px solid #ffd700;
+    animation: crypto-pulse 2s infinite;
+}
+
+@keyframes crypto-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+    }
+}
+
 /* 价格变化动画 */
 .price-updating {
     opacity: 0.6;
     transition: opacity 0.2s ease;
+}
+
+/* Lightweight Charts 样式 */
+#lightweightChartContainer {
+    width: 100%;
+    height: 400px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    background: #1e1e1e;
+    margin-top: 10px;
+}
+
+        .chart-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            border: 1px solid #444;
+            flex-wrap: wrap;
+        }
+
+        .chart-price-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-right: 20px;
+        }
+
+        .current-price {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .price-label {
+            color: #a0a0a0;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .price-value {
+            color: #d1d4dc;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .price-change {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .change-value {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .change-value.positive {
+            color: #26a69a;
+        }
+
+        .change-value.negative {
+            color: #ef5350;
+        }
+
+        .change-percent {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .change-percent.positive {
+            color: #26a69a;
+        }
+
+        .change-percent.negative {
+            color: #ef5350;
+        }
+
+.chart-control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-control-group label {
+    color: #d1d4dc;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.chart-range-select,
+.chart-interval-select {
+    padding: 6px 12px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: #1e1e1e;
+    color: #d1d4dc;
+    font-size: 12px;
+    cursor: pointer;
+    min-width: 80px;
+}
+
+.chart-range-select:focus,
+.chart-interval-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.chart-range-select:hover,
+.chart-interval-select:hover {
+    border-color: #777;
+}
+
+/* 图表加载状态 */
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: #d1d4dc;
+    font-size: 14px;
+    gap: 10px;
+    background: rgba(30, 30, 30, 0.8);
+    border-radius: 8px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+}
+
+.chart-loading i {
+    animation: spin 1s linear infinite;
+}
+
+.chart-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    color: #ef5350;
+    font-size: 14px;
+    gap: 10px;
+    background: rgba(239, 83, 80, 0.1);
+    border: 1px solid rgba(239, 83, 80, 0.3);
+    border-radius: 8px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    padding: 0 20px;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .price-updated {
@@ -1051,7 +1235,6 @@ body {
 
 .chart-container {
     position: relative;
-    height: 200px;
     width: 100%;
 }
 
@@ -1088,13 +1271,6 @@ body {
         margin: 0 4px;
     }
     
-    .chart-container {
-        height: 150px;
-    }
-    
-    .chart-loading {
-        height: 150px;
-    }
 }
 
 /* K线图样式 */
@@ -1166,4 +1342,55 @@ body {
 
 .chart-loading i {
     font-size: 16px;
+}
+
+/* 图表错误样式 */
+.chart-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: #d1d4dc;
+}
+
+.error-icon {
+    font-size: 48px;
+    color: #ff6b6b;
+    margin-bottom: 20px;
+}
+
+.error-message h3 {
+    color: #ff6b6b;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.error-message p {
+    margin-bottom: 8px;
+    color: #a0a0a0;
+    line-height: 1.5;
+}
+
+.error-actions {
+    margin-top: 20px;
+}
+
+.error-actions .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.error-actions .btn-primary:hover {
+    background: #5a6fd8;
 }

@@ -17,6 +17,36 @@ class StockAPIService {
         this.rapidapiKey = settings.rapidapiKey;
     }
 
+    // 检测是否为加密货币交易对
+    isCryptocurrency(symbol) {
+        if (!symbol || typeof symbol !== 'string') return false;
+        
+        // 常见的加密货币符号列表（更高效）
+        const cryptoSymbols = new Set([
+            'BTC-USD', 'ETH-USD', 'ADA-USD', 'SOL-USD', 'MATIC-USD',
+            'DOT-USD', 'AVAX-USD', 'LINK-USD', 'UNI-USD', 'AAVE-USD',
+            'LTC-USD', 'BCH-USD', 'XRP-USD', 'DOGE-USD', 'SHIB-USD',
+            'ATOM-USD', 'NEAR-USD', 'FTM-USD', 'ALGO-USD', 'VET-USD',
+            'TRX-USD', 'XLM-USD', 'EOS-USD', 'XTZ-USD', 'FIL-USD',
+            'ICP-USD', 'THETA-USD', 'HBAR-USD', 'MANA-USD', 'SAND-USD',
+            'CRV-USD', 'COMP-USD', 'MKR-USD', 'SNX-USD', 'YFI-USD',
+            '1INCH-USD', 'BAT-USD', 'ZRX-USD', 'ENJ-USD', 'CHZ-USD',
+            'GRT-USD', 'LRC-USD', 'OMG-USD', 'KNC-USD', 'REN-USD',
+            'STORJ-USD', 'DASH-USD', 'ZEC-USD', 'XMR-USD', 'NEO-USD',
+            'QTUM-USD', 'IOTA-USD', 'ONT-USD', 'ICX-USD', 'WAVES-USD',
+            'NANO-USD', 'SC-USD', 'DGB-USD', 'RVN-USD', 'DCR-USD',
+            'LSK-USD', 'ARK-USD', 'REP-USD', 'GNT-USD', 'FUN-USD',
+            'POWR-USD', 'REQ-USD', 'KMD-USD', 'SYS-USD', 'PART-USD',
+            'DNT-USD', 'CVC-USD', 'ADX-USD', 'MCO-USD', 'EDG-USD',
+            'WINGS-USD', 'RLC-USD', 'GAS-USD', 'FCT-USD', 'MAID-USD',
+            'DGD-USD', '1ST-USD', 'CFI-USD', 'RDN-USD', 'ADT-USD',
+            'QSP-USD', 'MYST-USD', 'BQX-USD', 'EVX-USD', 'VIB-USD',
+            'TRST-USD'
+        ]);
+        
+        return cryptoSymbols.has(symbol.toUpperCase());
+    }
+
     async getSettings() {
         return new Promise((resolve) => {
             chrome.storage.sync.get(['rapidapiKey', 'refreshInterval'], (result) => {
@@ -28,112 +58,150 @@ class StockAPIService {
         });
     }
 
-    // 获取股票实时价格 - 使用 Yahoo Finance API
+    // 验证时间范围和间隔的兼容性
+    validateRangeIntervalCombination(range, interval) {
+        // Yahoo Finance API 支持的时间范围和间隔组合
+        const validCombinations = {
+            '1d': ['1m', '2m', '5m', '15m', '30m', '60m', '90m'],
+            '5d': ['1m', '2m', '5m', '15m', '30m', '60m', '90m'],
+            '1mo': ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d'],
+            '3mo': ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d'],
+            '6mo': ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d'],
+            '1y': ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo'],
+            '2y': ['1h', '1d', '5d', '1wk', '1mo'],
+            '5y': ['1d', '5d', '1wk', '1mo'],
+            '10y': ['1d', '5d', '1wk', '1mo'],
+            'ytd': ['1d', '5d', '1wk', '1mo'],
+            'max': ['1d', '5d', '1wk', '1mo']
+        };
+
+        // 检查组合是否有效
+        if (validCombinations[range] && validCombinations[range].includes(interval)) {
+            return { valid: true, range, interval };
+        }
+
+        // 如果无效，找到最接近的有效组合
+        const availableRanges = Object.keys(validCombinations);
+        const availableIntervals = validCombinations[range] || validCombinations['1mo'];
+        
+        // 优先保持范围，调整间隔
+        if (validCombinations[range]) {
+            const fallbackInterval = validCombinations[range][validCombinations[range].length - 1];
+            return { valid: false, range, interval: fallbackInterval };
+        }
+        
+        // 如果范围也不支持，使用默认组合
+        return { valid: false, range: '1mo', interval: '1d' };
+    }
+
+    // 获取股票实时价格 - 使用多种API源
     async getStockQuote(symbol) {
         try {
-            // 使用正确的 Yahoo Finance API 端点
-            const url = `${this.yahooURL}/${symbol}?interval=1d&range=1d&includePrePost=false&useYfid=true&corsDomain=finance.yahoo.com&.tsrc=fin-srch`;
-            console.log('请求 URL:', url);
-            
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Accept': 'application/json',
-                    'Accept-Language': 'en-US,en;q=0.9',
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Connection': 'keep-alive',
-                    'Referer': 'https://finance.yahoo.com/',
-                    'Origin': 'https://finance.yahoo.com'
-                },
-                mode: 'cors'
-            });
-
-            console.log('响应状态:', response.status, response.statusText);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log('Yahoo Finance API 原始数据:', data);
-            
-            // 检查是否有错误信息
-            if (data.chart && data.chart.error) {
-                throw new Error(data.chart.error.description || 'API 返回错误');
-            }
-            
-            if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
-                throw new Error('未找到股票数据');
-            }
-
-            const result = data.chart.result[0];
-            const meta = result.meta;
-            const quote = result.indicators.quote[0];
-            
-            console.log('解析后的数据:', { meta, quote });
-            
-            // 获取最新价格
-            const prices = quote.close.filter(price => price !== null);
-            const volumes = quote.volume.filter(vol => vol !== null);
-            const highs = quote.high.filter(high => high !== null);
-            const lows = quote.low.filter(low => low !== null);
-            const opens = quote.open.filter(open => open !== null);
-            
-            const currentPrice = prices[prices.length - 1] || meta.regularMarketPrice;
-            const previousClose = meta.chartPreviousClose || meta.previousClose;
-            const change = currentPrice - previousClose;
-            const changePercent = (change / previousClose) * 100;
-            
-            console.log('计算后的价格数据:', {
-                currentPrice,
-                previousClose,
-                change,
-                changePercent,
-                volume: volumes[volumes.length - 1] || meta.regularMarketVolume,
-                high: highs[highs.length - 1] || meta.regularMarketDayHigh,
-                low: lows[lows.length - 1] || meta.regularMarketDayLow,
-                open: opens[opens.length - 1] || meta.regularMarketOpen
-            });
-            
-            const resultData = {
-                symbol: meta.symbol,
-                price: currentPrice,
-                change: change,
-                changePercent: changePercent,
-                volume: volumes[volumes.length - 1] || meta.regularMarketVolume,
-                high: highs[highs.length - 1] || meta.regularMarketDayHigh,
-                low: lows[lows.length - 1] || meta.regularMarketDayLow,
-                open: opens[opens.length - 1] || meta.regularMarketOpen,
-                previousClose: previousClose,
-                marketState: meta.marketState || 'REGULAR',
-                currency: meta.currency,
-                exchange: meta.exchangeName,
-                longName: meta.longName,
-                shortName: meta.shortName,
-                fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh,
-                fiftyTwoWeekLow: meta.fiftyTwoWeekLow
-            };
-            
-            console.log('最终返回数据:', resultData);
-            return resultData;
+            // 首先尝试 Yahoo Finance V8 API
+            return await this.getStockQuoteYahooV8(symbol);
         } catch (error) {
-            console.error('Yahoo Finance API 失败，尝试备用方案:', error);
-            
-            // 尝试使用备用 Yahoo Finance API
+            console.log('Yahoo Finance V8 API 失败，尝试 V7 API:', error.message);
             try {
+                // 备用方案：Yahoo Finance V7 API
                 return await this.getStockQuoteYahooV7(symbol);
             } catch (v7Error) {
-                console.error('Yahoo Finance V7 API 也失败:', v7Error);
-                
-                // 如果所有 Yahoo Finance API 都失败，尝试使用 RapidAPI
-                if (this.rapidapiKey) {
-                    return await this.getStockQuoteRapidAPI(symbol);
+                console.log('Yahoo Finance V7 API 也失败，尝试备用端点:', v7Error.message);
+                try {
+                    // 最后备用方案：使用不同的端点
+                    return await this.getStockQuoteAlternative(symbol);
+                } catch (altError) {
+                    console.error('所有API都失败了:', altError.message);
+                    throw new Error(`无法获取 ${symbol} 的价格数据`);
                 }
-                
-                throw new Error(`所有 API 都失败了: ${error.message}`);
             }
         }
+    }
+
+    // Yahoo Finance V8 API
+    async getStockQuoteYahooV8(symbol) {
+        // 使用更简单的参数，避免复杂的查询
+        const url = `${this.yahooURL}/${symbol}?interval=1d&range=1d`;
+        console.log(`Yahoo V8 请求 URL (${symbol}):`, url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Referer': 'https://finance.yahoo.com/'
+            },
+            mode: 'cors'
+        });
+
+        console.log('Yahoo V8 响应状态:', response.status, response.statusText);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Yahoo V8 API 原始数据:', data);
+        
+        // 检查是否有错误信息
+        if (data.chart && data.chart.error) {
+            throw new Error(data.chart.error.description || 'API 返回错误');
+        }
+        
+        if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+            throw new Error('未找到股票数据');
+        }
+
+        const result = data.chart.result[0];
+        const meta = result.meta;
+        const quote = result.indicators.quote[0];
+        
+        console.log('解析后的数据:', { meta, quote });
+        
+        // 获取最新价格
+        const prices = quote.close.filter(price => price !== null);
+        const volumes = quote.volume.filter(vol => vol !== null);
+        const highs = quote.high.filter(high => high !== null);
+        const lows = quote.low.filter(low => low !== null);
+        const opens = quote.open.filter(open => open !== null);
+        
+        const currentPrice = prices[prices.length - 1] || meta.regularMarketPrice;
+        const previousClose = meta.chartPreviousClose || meta.previousClose;
+        const change = currentPrice - previousClose;
+        const changePercent = (change / previousClose) * 100;
+        
+        console.log('计算后的价格数据:', {
+            currentPrice,
+            previousClose,
+            change,
+            changePercent,
+            volume: volumes[volumes.length - 1] || meta.regularMarketVolume,
+            high: highs[highs.length - 1] || meta.regularMarketDayHigh,
+            low: lows[lows.length - 1] || meta.regularMarketDayLow,
+            open: opens[opens.length - 1] || meta.regularMarketOpen
+        });
+        
+        const resultData = {
+            symbol: meta.symbol,
+            price: currentPrice,
+            change: change,
+            changePercent: changePercent,
+            volume: volumes[volumes.length - 1] || meta.regularMarketVolume,
+            high: highs[highs.length - 1] || meta.regularMarketDayHigh,
+            low: lows[lows.length - 1] || meta.regularMarketDayLow,
+            open: opens[opens.length - 1] || meta.regularMarketOpen,
+            previousClose: previousClose,
+            marketState: meta.marketState || 'REGULAR',
+            currency: meta.currency,
+            exchange: meta.exchangeName,
+            longName: meta.longName,
+            shortName: meta.shortName,
+            fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh,
+            fiftyTwoWeekLow: meta.fiftyTwoWeekLow
+        };
+        
+        console.log('最终返回数据:', resultData);
+        return resultData;
     }
 
     // 备用 Yahoo Finance V7 API
@@ -191,6 +259,54 @@ class StockAPIService {
             console.error('Yahoo Finance V7 API 失败:', error);
             throw error;
         }
+    }
+
+    // 备用API方法 - 使用不同的端点
+    async getStockQuoteAlternative(symbol) {
+        // 使用更简单的端点
+        const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
+        console.log(`备用API请求 URL (${symbol}):`, url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1',
+                'Accept': 'application/json',
+                'Accept-Language': 'en-US,en;q=0.9'
+            },
+            mode: 'cors'
+        });
+
+        console.log('备用API响应状态:', response.status, response.statusText);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('备用API原始数据:', data);
+        
+        if (!data.quoteResponse || !data.quoteResponse.result || data.quoteResponse.result.length === 0) {
+            throw new Error('未找到股票数据');
+        }
+
+        const quote = data.quoteResponse.result[0];
+        console.log('备用API解析后的数据:', quote);
+        
+        return {
+            symbol: quote.symbol,
+            price: parseFloat(quote.regularMarketPrice || quote.price || 0),
+            change: parseFloat(quote.regularMarketChange || quote.change || 0),
+            changePercent: parseFloat(quote.regularMarketChangePercent || quote.changePercent || 0),
+            volume: parseInt(quote.regularMarketVolume || quote.volume || 0),
+            high: parseFloat(quote.regularMarketDayHigh || quote.dayHigh || 0),
+            low: parseFloat(quote.regularMarketDayLow || quote.dayLow || 0),
+            open: parseFloat(quote.regularMarketOpen || quote.open || 0),
+            previousClose: parseFloat(quote.previousClose || 0),
+            marketState: quote.marketState || 'REGULAR',
+            currency: quote.currency || 'USD',
+            exchange: quote.exchange || 'NMS'
+        };
     }
 
     // 备用 API - RapidAPI Yahoo Finance
@@ -451,6 +567,14 @@ class StockAPIService {
     async getHistoricalData(symbol, range = '1mo', interval = '1d') {
         try {
             console.log(`获取历史数据: ${symbol}, 范围: ${range}, 间隔: ${interval}`);
+            
+            // 验证时间范围和间隔的兼容性
+            const validCombination = this.validateRangeIntervalCombination(range, interval);
+            if (!validCombination.valid) {
+                console.warn(`无效的时间范围和间隔组合: ${range}/${interval}, 使用默认组合: ${validCombination.range}/${validCombination.interval}`);
+                range = validCombination.range;
+                interval = validCombination.interval;
+            }
             
             // 使用 Yahoo Finance API 获取历史数据
             const url = `${this.yahooURL}/${symbol}?interval=${interval}&range=${range}&includePrePost=false&useYfid=true&corsDomain=finance.yahoo.com&.tsrc=fin-srch`;
@@ -772,6 +896,12 @@ class AlertManager {
         });
     }
 
+    // 检查单个股票的价格提醒
+    checkSingleAlert(symbol, quote) {
+        const currentPrices = { [symbol]: quote };
+        this.checkAlerts(currentPrices);
+    }
+
     triggerAlert(alert, currentPrice) {
         alert.triggered = true;
         this.saveAlerts();
@@ -801,13 +931,24 @@ class StocksApp {
         this.lastRateUpdate = null; // 汇率更新时间
         
         // 实时更新相关
-        this.updateInterval = null;
-        this.isUpdating = false;
-        this.lastUpdateTime = null;
+        this.updateIntervals = new Map(); // 存储每个股票的独立更新间隔
+        this.isUpdating = new Set(); // 跟踪正在更新的股票
+        this.lastUpdateTime = new Map(); // 存储每个股票的最后更新时间
         this.updateFrequency = 5000; // 5秒更新一次（交易时间内）
         this.offHoursUpdateFrequency = 30000; // 非交易时间30秒更新一次
+        this.cryptoUpdateFrequency = 1000; // 加密货币1秒更新一次
         this.marketStatus = 'unknown'; // 'open', 'closed', 'pre-market', 'after-hours'
         this.priceHistory = new Map(); // 存储价格历史用于动画效果
+        
+            // Lightweight Charts 相关
+            this.chart = null; // Lightweight Charts 实例
+            this.candlestickSeries = null; // 蜡烛图系列
+            this.chartUpdateIntervals = new Map(); // 存储每个股票的K线图更新间隔
+            this.currentChartSymbol = null; // 当前显示的K线图股票
+            this.chartDataCache = new Map(); // 缓存K线图数据
+            this.chartCurrentPeriod = '1d'; // 当前K线周期
+            this.chartCurrentRange = '1mo'; // 当前时间范围
+            this.chartContainer = null; // 图表容器
     }
 
     async init() {
@@ -815,10 +956,36 @@ class StocksApp {
         await this.portfolioManager.init();
         await this.alertManager.init();
         
+        // 检查LightweightCharts库是否可用
+        if (typeof LightweightCharts === 'undefined') {
+            console.log('等待LightweightCharts库加载...');
+            await this.waitForLightweightCharts();
+        }
+        
         this.setupEventListeners();
         this.loadInitialData();
         this.startAutoRefresh();
         this.startRealTimeUpdates();
+    }
+
+    // 等待LightweightCharts库加载
+    async waitForLightweightCharts() {
+        return new Promise((resolve) => {
+            const checkInterval = setInterval(() => {
+                if (typeof LightweightCharts !== 'undefined') {
+                    clearInterval(checkInterval);
+                    console.log('LightweightCharts库已加载');
+                    resolve();
+                }
+            }, 100);
+            
+            // 10秒超时
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                console.warn('LightweightCharts库加载超时');
+                resolve();
+            }, 10000);
+        });
     }
 
     setupEventListeners() {
@@ -973,6 +1140,66 @@ class StocksApp {
 
         // 货币转换
         this.setupCurrencyConverter();
+        
+        // K线图控制事件监听器
+        this.setupChartEventListeners();
+    }
+
+    // 设置K线图事件监听器
+    setupChartEventListeners() {
+        // 周期切换
+        const chartRangeSelect = document.getElementById('chartRange');
+        const chartIntervalSelect = document.getElementById('chartInterval');
+        
+        if (chartRangeSelect) {
+            chartRangeSelect.addEventListener('change', (e) => {
+                this.chartCurrentRange = e.target.value;
+                this.updateIntervalOptions(e.target.value);
+                this.updateChartPeriod();
+            });
+        }
+        
+        if (chartIntervalSelect) {
+            chartIntervalSelect.addEventListener('change', (e) => {
+                this.chartCurrentPeriod = e.target.value;
+                this.updateChartPeriod();
+            });
+        }
+
+        // K线图画布交互事件
+        const canvas = document.getElementById('candlestickCanvas');
+        if (canvas) {
+            // 鼠标移动事件（十字光标）
+            canvas.addEventListener('mousemove', (e) => {
+                this.handleChartMouseMove(e);
+            });
+
+            // 鼠标离开事件（隐藏十字光标）
+            canvas.addEventListener('mouseleave', () => {
+                this.chartCrosshairVisible = false;
+                this.redrawChart();
+            });
+
+            // 鼠标按下事件（开始拖拽）
+            canvas.addEventListener('mousedown', (e) => {
+                this.handleChartMouseDown(e);
+            });
+
+            // 鼠标释放事件（结束拖拽）
+            canvas.addEventListener('mouseup', () => {
+                this.handleChartMouseUp();
+            });
+
+            // 滚轮事件（缩放）
+            canvas.addEventListener('wheel', (e) => {
+                this.handleChartWheel(e);
+            });
+
+            // 双击事件（重置缩放）
+            canvas.addEventListener('dblclick', () => {
+                this.resetChartZoom();
+            });
+        }
     }
 
     switchTab(tabName) {
@@ -1015,37 +1242,190 @@ class StocksApp {
 
     // 启动实时价格更新
     startRealTimeUpdates() {
-        // 清除现有的更新定时器
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-        }
+        // 清除所有现有的更新间隔
+        this.stopRealTimeUpdates();
         
-        // 立即执行一次更新
+        // 立即执行一次市场状态更新
         this.updateMarketStatus();
-        this.performRealTimeUpdate();
         
-        // 设置定时更新
-        this.updateInterval = setInterval(() => {
-            this.performRealTimeUpdate();
-        }, this.getUpdateFrequency());
+        // 为每个股票设置独立的更新间隔
+        this.setupIndividualUpdates();
         
-        console.log('实时价格更新已启动');
+        console.log('实时价格更新已启动（独立频率模式）');
     }
     
     // 停止实时更新
     stopRealTimeUpdates() {
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-            this.updateInterval = null;
-            console.log('实时价格更新已停止');
+        // 清除所有股票的更新间隔
+        this.updateIntervals.forEach((intervalId, symbol) => {
+            clearInterval(intervalId);
+            console.log(`停止 ${symbol} 的更新间隔`);
+        });
+        this.updateIntervals.clear();
+        this.isUpdating.clear();
+        
+        // 清除所有K线图更新间隔
+        this.chartUpdateIntervals.forEach((intervalId, symbol) => {
+            clearInterval(intervalId);
+            console.log(`停止 ${symbol} 的K线图更新间隔`);
+        });
+        this.chartUpdateIntervals.clear();
+        
+        console.log('所有实时价格更新已停止');
+    }
+    
+    // 设置独立的更新间隔
+    setupIndividualUpdates() {
+        const symbolsToUpdate = this.getSymbolsToUpdate();
+        
+        symbolsToUpdate.forEach(symbol => {
+            this.setupSymbolUpdate(symbol);
+        });
+    }
+    
+    // 为单个股票设置更新间隔
+    setupSymbolUpdate(symbol) {
+        // 如果已经有更新间隔，先清除
+        if (this.updateIntervals.has(symbol)) {
+            clearInterval(this.updateIntervals.get(symbol));
+        }
+        
+        // 获取该股票的更新频率
+        const frequency = this.getSymbolUpdateFrequency(symbol);
+        
+        // 立即执行一次更新
+        this.updateSymbolPrice(symbol);
+        
+        // 设置定时更新
+        const intervalId = setInterval(() => {
+            this.updateSymbolPrice(symbol);
+        }, frequency);
+        
+        this.updateIntervals.set(symbol, intervalId);
+        console.log(`${symbol} 设置更新频率: ${frequency}ms`);
+    }
+    
+    // 获取单个股票的更新频率
+    getSymbolUpdateFrequency(symbol) {
+        if (this.isCryptocurrency(symbol)) {
+            return this.cryptoUpdateFrequency; // 1秒
+        } else {
+            // 传统股票根据市场状态决定
+            return this.marketStatus === 'open' ? 
+                this.updateFrequency : 
+                this.offHoursUpdateFrequency;
         }
     }
     
-    // 获取更新频率（根据市场状态）
-    getUpdateFrequency() {
-        return this.marketStatus === 'open' ? 
-            this.updateFrequency : 
-            this.offHoursUpdateFrequency;
+    // 更新单个股票价格
+    async updateSymbolPrice(symbol) {
+        // 防止重复更新
+        if (this.isUpdating.has(symbol)) {
+            console.log(`${symbol} 正在更新中，跳过本次更新`);
+            return;
+        }
+        
+        this.isUpdating.add(symbol);
+        this.lastUpdateTime.set(symbol, new Date());
+        
+        try {
+            console.log(`开始更新 ${symbol} 价格`);
+            
+            // 获取价格数据
+            const quote = await this.apiService.getStockQuote(symbol);
+            
+            if (quote) {
+                // 更新UI显示
+                await this.updateSinglePriceDisplay(symbol, quote);
+                
+                // 检查价格提醒
+                this.alertManager.checkSingleAlert(symbol, quote);
+                
+                console.log(`${symbol} 价格更新完成: $${quote.price}`);
+            }
+            
+        } catch (error) {
+            console.error(`更新 ${symbol} 价格失败:`, error);
+        } finally {
+            this.isUpdating.delete(symbol);
+        }
+    }
+    
+    // 更新单个价格显示
+    async updateSinglePriceDisplay(symbol, quote) {
+        const updatedPrices = { [symbol]: quote };
+        
+        // 更新投资组合中的价格
+        await this.updatePortfolioPrices(updatedPrices);
+        
+        // 更新观察列表中的价格
+        await this.updateWatchlistPrices(updatedPrices);
+        
+        // 更新市场数据中的价格
+        await this.updateMarketDataPrices(updatedPrices);
+    }
+    
+    // 检测是否为加密货币交易对
+    isCryptocurrency(symbol) {
+        // 使用更简洁的检测方法：检查是否以-USD结尾且不是传统股票
+        if (!symbol || typeof symbol !== 'string') return false;
+        
+        // 常见的加密货币符号列表（更高效）
+        const cryptoSymbols = new Set([
+            'BTC-USD', 'ETH-USD', 'ADA-USD', 'SOL-USD', 'MATIC-USD',
+            'DOT-USD', 'AVAX-USD', 'LINK-USD', 'UNI-USD', 'AAVE-USD',
+            'LTC-USD', 'BCH-USD', 'XRP-USD', 'DOGE-USD', 'SHIB-USD',
+            'ATOM-USD', 'NEAR-USD', 'FTM-USD', 'ALGO-USD', 'VET-USD',
+            'TRX-USD', 'XLM-USD', 'EOS-USD', 'XTZ-USD', 'FIL-USD',
+            'ICP-USD', 'THETA-USD', 'HBAR-USD', 'MANA-USD', 'SAND-USD',
+            'CRV-USD', 'COMP-USD', 'MKR-USD', 'SNX-USD', 'YFI-USD',
+            '1INCH-USD', 'BAT-USD', 'ZRX-USD', 'ENJ-USD', 'CHZ-USD',
+            'GRT-USD', 'LRC-USD', 'OMG-USD', 'KNC-USD', 'REN-USD',
+            'STORJ-USD', 'DASH-USD', 'ZEC-USD', 'XMR-USD', 'NEO-USD',
+            'QTUM-USD', 'IOTA-USD', 'ONT-USD', 'ICX-USD', 'WAVES-USD',
+            'NANO-USD', 'SC-USD', 'DGB-USD', 'RVN-USD', 'DCR-USD',
+            'LSK-USD', 'ARK-USD', 'REP-USD', 'GNT-USD', 'FUN-USD',
+            'POWR-USD', 'REQ-USD', 'KMD-USD', 'SYS-USD', 'PART-USD',
+            'DNT-USD', 'CVC-USD', 'ADX-USD', 'MCO-USD', 'EDG-USD',
+            'WINGS-USD', 'RLC-USD', 'GAS-USD', 'FCT-USD', 'MAID-USD',
+            'DGD-USD', '1ST-USD', 'CFI-USD', 'RDN-USD', 'ADT-USD',
+            'QSP-USD', 'MYST-USD', 'BQX-USD', 'EVX-USD', 'VIB-USD',
+            'TRST-USD'
+        ]);
+        
+        return cryptoSymbols.has(symbol.toUpperCase());
+    }
+
+    // 检查是否有加密货币在监控列表中（用于UI显示）
+    hasCryptocurrencyInWatchlist() {
+        const allSymbols = this.getSymbolsToUpdate();
+        return allSymbols.some(symbol => this.isCryptocurrency(symbol));
+    }
+    
+    // 当股票列表变化时重新设置更新间隔
+    refreshUpdateIntervals() {
+        const currentSymbols = this.getSymbolsToUpdate();
+        const existingSymbols = Array.from(this.updateIntervals.keys());
+        
+        // 添加新的股票
+        currentSymbols.forEach(symbol => {
+            if (!this.updateIntervals.has(symbol)) {
+                this.setupSymbolUpdate(symbol);
+            }
+        });
+        
+        // 移除不再需要的股票
+        existingSymbols.forEach(symbol => {
+            if (!currentSymbols.includes(symbol)) {
+                const intervalId = this.updateIntervals.get(symbol);
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    this.updateIntervals.delete(symbol);
+                    this.isUpdating.delete(symbol);
+                    console.log(`移除 ${symbol} 的更新间隔`);
+                }
+            }
+        });
     }
     
     // 更新市场状态
@@ -1095,16 +1475,30 @@ class StocksApp {
         const statusElement = document.getElementById('marketStatus');
         if (!statusElement) return;
         
-        const statusText = {
-            'open': '🟢 交易中',
-            'closed': '🔴 休市',
-            'pre-market': '🟡 盘前交易',
-            'after-hours': '🟡 盘后交易',
-            'unknown': '❓ 状态未知'
-        };
+        // 检查是否有加密货币在监控列表中
+        const hasCrypto = this.hasCryptocurrencyInWatchlist();
+        
+        let statusText;
+        if (hasCrypto) {
+            statusText = {
+                'open': '🟢 交易中 (含加密货币)',
+                'closed': '🟢 加密货币24h交易中',
+                'pre-market': '🟡 盘前交易 (含加密货币)',
+                'after-hours': '🟡 盘后交易 (含加密货币)',
+                'unknown': '🟢 加密货币24h交易中'
+            };
+        } else {
+            statusText = {
+                'open': '🟢 交易中',
+                'closed': '🔴 休市',
+                'pre-market': '🟡 盘前交易',
+                'after-hours': '🟡 盘后交易',
+                'unknown': '❓ 状态未知'
+            };
+        }
         
         statusElement.textContent = statusText[this.marketStatus] || '❓ 状态未知';
-        statusElement.className = `market-status ${this.marketStatus}`;
+        statusElement.className = `market-status ${this.marketStatus}${hasCrypto ? ' crypto-active' : ''}`;
     }
     
     // 执行实时更新
@@ -1586,11 +1980,30 @@ class StocksApp {
                 chartContainer.style.display = 'none';
             }
             
+            // 设置当前K线图股票
+            this.currentChartSymbol = symbol;
+            
+            // 根据股票类型选择不同的时间间隔
+            let range, interval;
+            if (this.isCryptocurrency(symbol)) {
+                range = '7d'; // 加密货币显示7天数据
+                interval = '1h'; // 1小时K线
+            } else {
+                range = '1mo'; // 传统股票显示1个月数据
+                interval = '1d'; // 1天K线
+            }
+            
             // 获取历史数据
-            const historicalData = await this.apiService.getHistoricalData(symbol, '1mo', '1d');
+            const historicalData = await this.apiService.getHistoricalData(symbol, range, interval);
+            
+            // 缓存数据
+            this.chartDataCache.set(symbol, historicalData);
             
             // 创建K线图
-            this.createCandlestickChart(historicalData, currency);
+            this.createCandlestickChart(historicalData, currency, symbol);
+            
+            // 启动K线图实时更新
+            this.startChartRealTimeUpdate(symbol);
             
             if (chartLoading) {
                 chartLoading.style.display = 'none';
@@ -1614,141 +2027,662 @@ class StocksApp {
         }
     }
 
+    // 验证和转换图表数据
+    validateAndConvertChartData(data) {
+        return data
+            .filter(item => {
+                // 检查必要字段是否存在且不为null/undefined
+                return item && 
+                       item.timestamp && 
+                       item.open !== null && item.open !== undefined &&
+                       item.high !== null && item.high !== undefined &&
+                       item.low !== null && item.low !== undefined &&
+                       item.close !== null && item.close !== undefined;
+            })
+            .map(item => {
+                const open = parseFloat(item.open);
+                const high = parseFloat(item.high);
+                const low = parseFloat(item.low);
+                const close = parseFloat(item.close);
+                
+                // 检查转换后的数值是否有效
+                if (isNaN(open) || isNaN(high) || isNaN(low) || isNaN(close)) {
+                    console.warn('发现无效数值:', item);
+                    return null;
+                }
+                
+                return {
+                    time: Math.floor(new Date(item.timestamp).getTime() / 1000), // 转换为秒级时间戳
+                    open: open,
+                    high: high,
+                    low: low,
+                    close: close
+                };
+            })
+            .filter(item => item !== null); // 过滤掉null值
+    }
+
     // 创建K线图
-    createCandlestickChart(historicalData, currency) {
-        const canvas = document.getElementById('candlestickCanvas');
+    createCandlestickChart(historicalData, currency, symbol) {
+        // 检查LightweightCharts是否已加载
+        if (typeof LightweightCharts === 'undefined') {
+            console.error('LightweightCharts库未加载');
+            return;
+        }
+
+        // 创建图表容器
+        this.createChartContainer();
+        
+        if (!this.chartContainer) {
+            console.error('图表容器未找到');
+            return;
+        }
+
+        // 准备数据
+        const data = historicalData.data;
+        if (data.length === 0) return;
+
+        // 转换数据格式为Lightweight Charts格式，过滤无效数据
+        const chartData = this.validateAndConvertChartData(data);
+
+        console.log('转换后的图表数据:', chartData.slice(0, 5)); // 显示前5条数据用于调试
+
+        // 检查数据有效性
+        if (chartData.length === 0) {
+            console.error('没有有效的图表数据');
+            return;
+        }
+
+        // 检查数据格式
+        const firstItem = chartData[0];
+        console.log('第一条数据:', firstItem);
+        console.log('数据类型检查:', {
+            time: typeof firstItem.time,
+            open: typeof firstItem.open,
+            high: typeof firstItem.high,
+            low: typeof firstItem.low,
+            close: typeof firstItem.close
+        });
+
+        try {
+            // 创建Lightweight Charts实例
+            this.chart = LightweightCharts.createChart(this.chartContainer, {
+                width: this.chartContainer.clientWidth,
+                height: 400,
+                layout: {
+                    background: { color: '#1e1e1e' },
+                    textColor: '#d1d4dc',
+                },
+                grid: {
+                    vertLines: { color: '#2B2B43' },
+                    horzLines: { color: '#2B2B43' },
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+                rightPriceScale: {
+                    borderColor: '#485158',
+                    scaleMargins: {
+                        top: 0.1,
+                        bottom: 0.1,
+                    },
+                },
+                timeScale: {
+                    borderColor: '#485158',
+                    timeVisible: true,
+                    secondsVisible: false,
+                },
+            });
+
+            // 创建蜡烛图系列
+            this.candlestickSeries = this.chart.addSeries(LightweightCharts.CandlestickSeries, {
+                upColor: '#26a69a',
+                downColor: '#ef5350',
+                borderDownColor: '#ef5350',
+                borderUpColor: '#26a69a',
+                wickDownColor: '#ef5350',
+                wickUpColor: '#26a69a',
+            });
+
+            // 设置数据
+            this.candlestickSeries.setData(chartData);
+            
+            // 自动调整视图
+            this.chart.timeScale().fitContent();
+            
+            console.log('蜡烛图数据已设置，数据条数:', chartData.length);
+
+            // 更新当前价格显示
+            this.updateChartPriceDisplay(symbol);
+
+            // 添加十字线
+            this.chart.subscribeCrosshairMove((param) => {
+                if (param.point === undefined || !param.time || param.point.x < 0 || param.point.x > this.chartContainer.clientWidth || param.point.y < 0 || param.point.y > 400) {
+                    return;
+                }
+
+                const data = param.seriesData.get(this.candlestickSeries);
+                if (data) {
+                    // 可以在这里添加价格显示逻辑
+                    console.log('十字线位置:', {
+                        time: new Date(param.time * 1000),
+                        price: data.close,
+                        open: data.open,
+                        high: data.high,
+                        low: data.low,
+                        close: data.close
+                    });
+                }
+            });
+
+            // 处理窗口大小变化
+            const resizeObserver = new ResizeObserver(entries => {
+                if (entries.length === 0 || entries[0].target !== this.chartContainer) return;
+                const newRect = entries[0].contentRect;
+                this.chart.applyOptions({ width: newRect.width, height: 400 });
+            });
+            resizeObserver.observe(this.chartContainer);
+
+            console.log('Lightweight Charts K线图创建完成');
+        } catch (error) {
+            console.error('创建Lightweight Charts失败:', error);
+        }
+    }
+
+    // 加载LightweightCharts库
+    async loadLightweightCharts() {
+        return new Promise((resolve, reject) => {
+            // 检查是否已经加载
+            if (typeof LightweightCharts !== 'undefined') {
+                resolve();
+                return;
+            }
+
+            // 创建script标签动态加载
+            const script = document.createElement('script');
+            script.src = 'lightweight-charts.standalone.production.js';
+            script.onload = () => {
+                console.log('LightweightCharts库加载成功');
+                resolve();
+            };
+            script.onerror = () => {
+                console.error('LightweightCharts库加载失败');
+                reject(new Error('无法加载LightweightCharts库'));
+            };
+            
+            document.head.appendChild(script);
+        });
+    }
+
+    // 显示图表错误
+    showChartError(message) {
+        const modalBody = document.getElementById('modalBody');
+        if (modalBody) {
+            modalBody.innerHTML = `
+                <div class="chart-error">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="error-message">
+                        <h3>图表加载失败</h3>
+                        <p>${message}</p>
+                        <p>请检查网络连接或刷新页面重试</p>
+                    </div>
+                    <div class="error-actions">
+                        <button class="btn-primary" onclick="location.reload()">
+                            <i class="fas fa-refresh"></i> 刷新页面
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // 创建图表容器
+    createChartContainer() {
+        // 查找或创建图表容器
+        let container = document.getElementById('lightweightChartContainer');
+        
+        if (!container) {
+            // 创建图表容器
+            container = document.createElement('div');
+            container.id = 'lightweightChartContainer';
+            container.style.width = '100%';
+            container.style.height = '400px';
+            container.style.border = '1px solid #333';
+            container.style.borderRadius = '4px';
+            container.style.background = '#1e1e1e';
+            
+            // 查找模态框内容区域
+            const modalBody = document.getElementById('modalBody');
+            if (modalBody) {
+                // 清空现有内容
+                modalBody.innerHTML = '';
+                
+                // 添加图表控制
+                const chartControls = document.createElement('div');
+                chartControls.className = 'chart-controls';
+                chartControls.innerHTML = `
+                    <div class="chart-price-info">
+                        <div class="current-price">
+                            <span class="price-label">当前价格:</span>
+                            <span id="chartCurrentPrice" class="price-value">--</span>
+                        </div>
+                        <div class="price-change">
+                            <span id="chartPriceChange" class="change-value">--</span>
+                            <span id="chartPriceChangePercent" class="change-percent">--</span>
+                        </div>
+                    </div>
+                    <div class="chart-control-group">
+                        <label for="chartRange">时间范围:</label>
+                                <select id="chartRange" class="chart-range-select">
+                                    <option value="1d">1天</option>
+                                    <option value="5d">5天</option>
+                                    <option value="1mo" selected>1个月</option>
+                                    <option value="3mo">3个月</option>
+                                    <option value="6mo">6个月</option>
+                                    <option value="1y">1年</option>
+                                    <option value="2y">2年</option>
+                                    <option value="5y">5年</option>
+                                    <option value="max">最大</option>
+                                </select>
+                    </div>
+                    <div class="chart-control-group">
+                        <label for="chartInterval">时间间隔:</label>
+                        <select id="chartInterval" class="chart-interval-select">
+                            <option value="1m">1分钟</option>
+                            <option value="5m">5分钟</option>
+                            <option value="15m">15分钟</option>
+                            <option value="30m">30分钟</option>
+                            <option value="1h">1小时</option>
+                            <option value="60m">60分钟</option>
+                            <option value="1d" selected>1天</option>
+                            <option value="1wk">1周</option>
+                            <option value="1mo">1月</option>
+                        </select>
+                    </div>
+                `;
+                
+                modalBody.appendChild(chartControls);
+                modalBody.appendChild(container);
+                
+                // 绑定控制事件
+                this.setupChartControls();
+            }
+        }
+        
+        this.chartContainer = container;
+    }
+
+    // 设置图表控制
+    setupChartControls() {
+        const chartRangeSelect = document.getElementById('chartRange');
+        const chartIntervalSelect = document.getElementById('chartInterval');
+
+        if (chartRangeSelect) {
+            chartRangeSelect.addEventListener('change', (e) => {
+                this.chartCurrentRange = e.target.value;
+                this.updateChartPeriod();
+            });
+        }
+
+        if (chartIntervalSelect) {
+            chartIntervalSelect.addEventListener('change', (e) => {
+                this.chartCurrentPeriod = e.target.value;
+                this.updateChartPeriod();
+            });
+        }
+    }
+
+    // 创建简单备用图表（当Chart.js不可用时）
+    createSimpleChart(historicalData, currency) {
+        const canvas = document.getElementById('stockChart');
         if (!canvas) {
-            console.error('K线图画布未找到');
+            console.error('图表画布未找到');
             return;
         }
 
         const ctx = canvas.getContext('2d');
         const width = canvas.width;
         const height = canvas.height;
-
+        
         // 清除画布
         ctx.clearRect(0, 0, width, height);
-
-        // 设置背景
-        ctx.fillStyle = '#1e1e1e';
-        ctx.fillRect(0, 0, width, height);
-
+        
         // 准备数据
-        const data = historicalData.data;
-        if (data.length === 0) return;
-
-        // 计算价格范围
-        const prices = data.flatMap(item => [item.high, item.low]);
+        const prices = historicalData.data.map(item => item.close);
         const minPrice = Math.min(...prices);
         const maxPrice = Math.max(...prices);
         const priceRange = maxPrice - minPrice;
-        const padding = priceRange * 0.1;
-        const chartMinPrice = minPrice - padding;
-        const chartMaxPrice = maxPrice + padding;
-        const chartPriceRange = chartMaxPrice - chartMinPrice;
-
-        // 计算蜡烛宽度
-        const candleWidth = Math.max(2, (width - 60) / data.length);
-        const candleSpacing = candleWidth + 1;
-
-        // 绘制网格
-        this.drawCandlestickGrid(ctx, width, height, chartMinPrice, chartMaxPrice);
-
-        // 绘制蜡烛
-        data.forEach((item, index) => {
-            const x = 30 + index * candleSpacing;
-            const isBullish = item.close >= item.open;
+        
+        // 设置样式
+        ctx.strokeStyle = '#667eea';
+        ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
+        ctx.lineWidth = 2;
+        
+        // 绘制价格线
+        ctx.beginPath();
+        prices.forEach((price, index) => {
+            const x = (index / (prices.length - 1)) * (width - 40) + 20;
+            const y = height - 20 - ((price - minPrice) / priceRange) * (height - 40);
             
-            // 计算Y坐标
-            const highY = height - 20 - ((item.high - chartMinPrice) / chartPriceRange) * (height - 40);
-            const lowY = height - 20 - ((item.low - chartMinPrice) / chartPriceRange) * (height - 40);
-            const openY = height - 20 - ((item.open - chartMinPrice) / chartPriceRange) * (height - 40);
-            const closeY = height - 20 - ((item.close - chartMinPrice) / chartPriceRange) * (height - 40);
-
-            // 绘制影线
-            ctx.strokeStyle = isBullish ? '#26a69a' : '#ef5350';
-            ctx.lineWidth = 1;
-            
-            // 上影线
-            ctx.beginPath();
-            ctx.moveTo(x + candleWidth / 2, highY);
-            ctx.lineTo(x + candleWidth / 2, Math.min(openY, closeY));
-            ctx.stroke();
-
-            // 下影线
-            ctx.beginPath();
-            ctx.moveTo(x + candleWidth / 2, Math.max(openY, closeY));
-            ctx.lineTo(x + candleWidth / 2, lowY);
-            ctx.stroke();
-
-            // 绘制实体
-            if (isBullish) {
-                ctx.strokeStyle = '#26a69a';
-                ctx.fillStyle = 'rgba(38, 166, 154, 0.1)';
+            if (index === 0) {
+                ctx.moveTo(x, y);
             } else {
-                ctx.strokeStyle = '#ef5350';
-                ctx.fillStyle = '#ef5350';
-            }
-
-            const bodyTop = Math.min(openY, closeY);
-            const bodyBottom = Math.max(openY, closeY);
-            const bodyHeight = bodyBottom - bodyTop;
-
-            if (bodyHeight > 0) {
-                ctx.fillRect(x + 1, bodyTop, candleWidth - 2, bodyHeight);
-                ctx.strokeRect(x + 1, bodyTop, candleWidth - 2, bodyHeight);
-            } else {
-                // 十字星
-                ctx.beginPath();
-                ctx.moveTo(x + 1, openY);
-                ctx.lineTo(x + candleWidth - 1, openY);
-                ctx.stroke();
+                ctx.lineTo(x, y);
             }
         });
-
-        // 绘制价格标签
-        this.drawCandlestickPriceLabels(ctx, width, height, chartMinPrice, chartMaxPrice);
-
-        console.log('K线图创建完成');
+        ctx.stroke();
+        
+        // 绘制填充区域
+        ctx.lineTo(width - 20, height - 20);
+        ctx.lineTo(20, height - 20);
+        ctx.closePath();
+        ctx.fill();
+        
+        console.log('简单图表创建完成');
     }
 
-    // 绘制K线图网格
-    drawCandlestickGrid(ctx, width, height, minPrice, maxPrice) {
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 1;
-
-        // 水平网格线
-        const priceLevels = 5;
-        for (let i = 0; i <= priceLevels; i++) {
-            const y = 20 + (i / priceLevels) * (height - 40);
-            ctx.beginPath();
-            ctx.moveTo(30, y);
-            ctx.lineTo(width - 10, y);
-            ctx.stroke();
-        }
-
-        // 垂直网格线
-        const timeLevels = 8;
-        for (let i = 0; i <= timeLevels; i++) {
-            const x = 30 + (i / timeLevels) * (width - 40);
-            ctx.beginPath();
-            ctx.moveTo(x, 20);
-            ctx.lineTo(x, height - 20);
-            ctx.stroke();
-        }
-    }
-
-    // 绘制K线图价格标签
-    drawCandlestickPriceLabels(ctx, width, height, minPrice, maxPrice) {
-        ctx.fillStyle = '#ccc';
-        ctx.font = '10px Arial';
+    // 绘制K线图状态
+    drawChartStatus(ctx, width, height) {
+        if (!this.currentChartSymbol) return;
+        
+        const isCrypto = this.isCryptocurrency(this.currentChartSymbol);
+        const statusText = isCrypto ? '🟢 实时K线 (30s更新, 1h周期)' : '🟡 K线图 (1min更新, 1d周期)';
+        
+        ctx.fillStyle = isCrypto ? '#26a69a' : '#ff9800';
+        ctx.font = '12px Arial';
         ctx.textAlign = 'right';
+        ctx.fillText(statusText, width - 10, 20);
+    }
 
-        const priceLevels = 5;
-        for (let i = 0; i <= priceLevels; i++) {
-            const price = minPrice + (i / priceLevels) * (maxPrice - minPrice);
-            const y = 20 + (i / priceLevels) * (height - 40);
-            ctx.fillText(price.toFixed(2), 25, y + 3);
+    // 绘制十字光标
+    drawCrosshair(ctx, width, height, chartMinPrice, chartMaxPrice, data, candleSpacing, clampedOffset) {
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        
+        // 垂直线
+        ctx.beginPath();
+        ctx.moveTo(this.chartMouseX, 20);
+        ctx.lineTo(this.chartMouseX, height - 20);
+        ctx.stroke();
+        
+        // 水平线
+        ctx.beginPath();
+        ctx.moveTo(30, this.chartMouseY);
+        ctx.lineTo(width - 30, this.chartMouseY);
+        ctx.stroke();
+        
+        ctx.setLineDash([]);
+        
+        // 绘制价格信息
+        const chartPriceRange = chartMaxPrice - chartMinPrice;
+        const price = chartMaxPrice - ((this.chartMouseY - 20) / (height - 40)) * chartPriceRange;
+        
+        // 背景
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(this.chartMouseX + 10, this.chartMouseY - 20, 80, 40);
+        
+        // 价格文本
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`$${price.toFixed(2)}`, this.chartMouseX + 15, this.chartMouseY - 5);
+        
+        // 时间信息
+        const dataIndex = Math.floor((this.chartMouseX - 30 - clampedOffset) / candleSpacing);
+        if (dataIndex >= 0 && dataIndex < data.length) {
+            const timeText = new Date(data[dataIndex].timestamp).toLocaleString();
+            ctx.fillText(timeText, this.chartMouseX + 15, this.chartMouseY + 10);
+        }
+    }
+
+    // 启动K线图实时更新
+    startChartRealTimeUpdate(symbol) {
+        // 停止之前的K线图更新
+        this.stopChartRealTimeUpdate(symbol);
+        
+        // 获取更新频率
+        const updateFrequency = this.getChartUpdateFrequency(symbol);
+        
+        // 设置定时更新
+        const intervalId = setInterval(async () => {
+            await this.updateChartData(symbol);
+        }, updateFrequency);
+        
+        this.chartUpdateIntervals.set(symbol, intervalId);
+        console.log(`K线图实时更新已启动: ${symbol}, 频率: ${updateFrequency}ms`);
+    }
+    
+    // 停止K线图实时更新
+    stopChartRealTimeUpdate(symbol) {
+        const intervalId = this.chartUpdateIntervals.get(symbol);
+        if (intervalId) {
+            clearInterval(intervalId);
+            this.chartUpdateIntervals.delete(symbol);
+            console.log(`K线图实时更新已停止: ${symbol}`);
+        }
+    }
+    
+    // 获取K线图更新频率
+    getChartUpdateFrequency(symbol) {
+        if (this.isCryptocurrency(symbol)) {
+            return 30000; // 加密货币30秒更新一次K线图
+        } else {
+            return 60000; // 传统股票1分钟更新一次K线图
+        }
+    }
+    
+    // 更新K线图数据
+    async updateChartData(symbol) {
+        try {
+            // 只有当前显示的K线图才更新
+            if (this.currentChartSymbol !== symbol) {
+                return;
+            }
+            
+            console.log(`更新K线图数据: ${symbol}`);
+            
+            // 根据股票类型选择不同的时间间隔
+            let range, interval;
+            if (this.isCryptocurrency(symbol)) {
+                range = '7d'; // 加密货币显示7天数据
+                interval = '1h'; // 1小时K线
+            } else {
+                range = '1mo'; // 传统股票显示1个月数据
+                interval = '1d'; // 1天K线
+            }
+            
+            // 获取最新的历史数据
+            const historicalData = await this.apiService.getHistoricalData(symbol, range, interval);
+            
+            // 更新缓存
+            this.chartDataCache.set(symbol, historicalData);
+            
+            // 更新Lightweight Charts
+            if (this.candlestickSeries && historicalData.data) {
+                const chartData = this.validateAndConvertChartData(historicalData.data);
+                
+                this.candlestickSeries.setData(chartData);
+                this.chart.timeScale().fitContent();
+                console.log(`Lightweight Charts已更新: ${symbol} (${range}, ${interval})`);
+                
+                // 更新价格显示
+                await this.updateChartPriceDisplay(symbol);
+            }
+            
+        } catch (error) {
+            console.error(`更新K线图数据失败: ${symbol}`, error);
+        }
+    }
+
+    // 更新图表价格显示
+    async updateChartPriceDisplay(symbol) {
+        try {
+            const quote = await this.apiService.getStockQuote(symbol);
+            if (quote && quote.price) {
+                const currentPriceEl = document.getElementById('chartCurrentPrice');
+                const priceChangeEl = document.getElementById('chartPriceChange');
+                const priceChangePercentEl = document.getElementById('chartPriceChangePercent');
+                
+                if (currentPriceEl) {
+                    currentPriceEl.textContent = `$${quote.price.toFixed(2)}`;
+                }
+                
+                if (priceChangeEl && quote.change !== undefined) {
+                    const changeValue = quote.change > 0 ? `+$${quote.change.toFixed(2)}` : `-$${Math.abs(quote.change).toFixed(2)}`;
+                    priceChangeEl.textContent = changeValue;
+                    priceChangeEl.className = `change-value ${quote.change >= 0 ? 'positive' : 'negative'}`;
+                }
+                
+                if (priceChangePercentEl && quote.changePercent !== undefined) {
+                    const changePercent = quote.changePercent > 0 ? `+${quote.changePercent.toFixed(2)}%` : `${quote.changePercent.toFixed(2)}%`;
+                    priceChangePercentEl.textContent = changePercent;
+                    priceChangePercentEl.className = `change-percent ${quote.changePercent >= 0 ? 'positive' : 'negative'}`;
+                }
+            }
+        } catch (error) {
+            console.error('更新图表价格显示失败:', error);
+        }
+    }
+
+    // 更新K线图周期
+    async updateChartPeriod() {
+        if (!this.currentChartSymbol) return;
+        
+        try {
+            console.log(`更新K线图周期: ${this.currentChartSymbol}, 范围: ${this.chartCurrentRange}, 间隔: ${this.chartCurrentPeriod}`);
+            
+            // 显示加载状态
+            this.showChartLoading();
+            
+            // 清除旧缓存，强制获取新数据
+            const cacheKey = `${this.currentChartSymbol}_${this.chartCurrentRange}_${this.chartCurrentPeriod}`;
+            this.chartDataCache.delete(cacheKey);
+            
+            // 获取新的历史数据
+            const historicalData = await this.apiService.getHistoricalData(
+                this.currentChartSymbol, 
+                this.chartCurrentRange, 
+                this.chartCurrentPeriod
+            );
+            
+            // 更新缓存
+            this.chartDataCache.set(cacheKey, historicalData);
+            
+            // 更新Lightweight Charts
+            if (this.candlestickSeries && historicalData.data) {
+                const chartData = this.validateAndConvertChartData(historicalData.data);
+                
+                this.candlestickSeries.setData(chartData);
+                this.chart.timeScale().fitContent();
+                console.log(`Lightweight Charts周期已更新: ${this.currentChartSymbol}`);
+                
+                // 更新价格显示
+                await this.updateChartPriceDisplay(this.currentChartSymbol);
+            }
+            
+            // 隐藏加载状态
+            this.hideChartLoading();
+            
+        } catch (error) {
+            console.error('更新K线图周期失败:', error);
+            this.hideChartLoading();
+            this.showChartError('更新图表数据失败，请稍后重试');
+        }
+    }
+
+    // 根据时间范围更新间隔选项
+    updateIntervalOptions(range) {
+        const intervalSelect = document.getElementById('chartInterval');
+        if (!intervalSelect) return;
+
+        // Yahoo Finance API 支持的时间范围和间隔组合
+        const validCombinations = {
+            '1d': ['1m', '2m', '5m', '15m', '30m', '60m', '90m'],
+            '5d': ['1m', '2m', '5m', '15m', '30m', '60m', '90m'],
+            '1mo': ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d'],
+            '3mo': ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d'],
+            '6mo': ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d'],
+            '1y': ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo'],
+            '2y': ['1h', '1d', '5d', '1wk', '1mo'],
+            '5y': ['1d', '5d', '1wk', '1mo'],
+            '10y': ['1d', '5d', '1wk', '1mo'],
+            'ytd': ['1d', '5d', '1wk', '1mo'],
+            'max': ['1d', '5d', '1wk', '1mo']
+        };
+
+        const availableIntervals = validCombinations[range] || validCombinations['1mo'];
+        const currentValue = intervalSelect.value;
+
+        // 清空现有选项
+        intervalSelect.innerHTML = '';
+
+        // 添加可用的间隔选项
+        const intervalLabels = {
+            '1m': '1分钟',
+            '2m': '2分钟',
+            '5m': '5分钟',
+            '15m': '15分钟',
+            '30m': '30分钟',
+            '60m': '60分钟',
+            '90m': '90分钟',
+            '1h': '1小时',
+            '1d': '1天',
+            '5d': '5天',
+            '1wk': '1周',
+            '1mo': '1月'
+        };
+
+        availableIntervals.forEach(interval => {
+            const option = document.createElement('option');
+            option.value = interval;
+            option.textContent = intervalLabels[interval] || interval;
+            if (interval === currentValue || (interval === '1d' && !availableIntervals.includes(currentValue))) {
+                option.selected = true;
+                this.chartCurrentPeriod = interval;
+            }
+            intervalSelect.appendChild(option);
+        });
+    }
+
+    // 显示图表加载状态
+    showChartLoading() {
+        const chartContainer = document.getElementById('lightweightChartContainer');
+        if (chartContainer) {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'chartLoadingIndicator';
+            loadingDiv.className = 'chart-loading';
+            loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在加载图表数据...';
+            chartContainer.appendChild(loadingDiv);
+        }
+    }
+
+    // 隐藏图表加载状态
+    hideChartLoading() {
+        const loadingDiv = document.getElementById('chartLoadingIndicator');
+        if (loadingDiv) {
+            loadingDiv.remove();
+        }
+    }
+
+    // 显示图表错误信息
+    showChartError(message) {
+        const chartContainer = document.getElementById('lightweightChartContainer');
+        if (chartContainer) {
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'chartErrorIndicator';
+            errorDiv.className = 'chart-error';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+            chartContainer.appendChild(errorDiv);
+            
+            // 3秒后自动隐藏错误信息
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 3000);
         }
     }
 
@@ -2419,6 +3353,9 @@ class StocksApp {
             // 刷新观察列表
             await this.loadWatchlist();
             console.log('观察列表已刷新');
+            
+            // 刷新更新间隔（为新添加的股票设置独立更新频率）
+            this.refreshUpdateIntervals();
         } catch (error) {
             console.error('添加到观察列表失败:', error);
             alert('添加到观察列表失败: ' + error.message);
@@ -2819,6 +3756,10 @@ class StocksApp {
             await this.portfolioManager.addToWatchlist(symbol);
             alert(`${symbol} 已添加到观察列表`);
             this.hideModal('stockModal');
+            
+            // 刷新观察列表和更新间隔
+            await this.loadWatchlist();
+            this.refreshUpdateIntervals();
         } catch (error) {
             console.error('添加到观察列表失败:', error);
             alert('添加到观察列表失败: ' + error.message);
@@ -2831,6 +3772,9 @@ class StocksApp {
                 this.portfolioManager.removeFromPortfolio(symbol);
                 alert(`${symbol} 已从投资组合中删除`);
                 await this.loadPortfolio();
+                
+                // 刷新更新间隔（移除不再需要的股票更新）
+                this.refreshUpdateIntervals();
             }
         } catch (error) {
             console.error('删除投资组合项目失败:', error);
@@ -2844,19 +3788,9 @@ class StocksApp {
                 this.portfolioManager.removeFromWatchlist(symbol);
                 alert(`${symbol} 已从观察列表中删除`);
                 await this.loadWatchlist();
-            }
-        } catch (error) {
-            console.error('删除观察列表项目失败:', error);
-            alert('删除失败: ' + error.message);
-        }
-    }
-
-    async removeFromWatchlist(symbol) {
-        try {
-            if (confirm(`确定要从观察列表中删除 ${symbol} 吗？`)) {
-                this.portfolioManager.removeFromWatchlist(symbol);
-                alert(`${symbol} 已从观察列表中删除`);
-                await this.loadWatchlist();
+                
+                // 刷新更新间隔（移除不再需要的股票更新）
+                this.refreshUpdateIntervals();
             }
         } catch (error) {
             console.error('删除观察列表项目失败:', error);
