@@ -176,6 +176,93 @@ body {
     display: block;
 }
 
+/* 观察列表样式 */
+#watchlistList {
+    padding: 16px 0;
+}
+
+#watchlistList .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+#watchlistList .empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+    color: #667eea;
+}
+
+#watchlistList .empty-state h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+#watchlistList .empty-state p {
+    font-size: 14px;
+    margin-bottom: 20px;
+    color: #6c757d;
+}
+
+/* 观察列表中的股票卡片容器 */
+.watchlist-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#watchlistList stock-card {
+    display: block;
+    transition: all 0.3s ease;
+}
+
+#watchlistList stock-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+/* 股票卡片悬停颜色变化 */
+#watchlistList stock-card:hover {
+    --card-bg-hover: #2a2a2a;
+    --card-border-hover: #667eea;
+}
+
+/* 观察列表标题 */
+.watchlist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 4px;
+}
+
+.watchlist-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.watchlist-title i {
+    color: #667eea;
+}
+
+.watchlist-count {
+    background: #667eea;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
 /* 投资组合摘要 */
 .portfolio-summary {
     display: grid;
@@ -321,6 +408,20 @@ body {
 }
 
 /* 按钮样式 */
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1.4;
+}
+
 .btn-primary {
     background: #667eea;
     color: white;
@@ -814,6 +915,9 @@ body {
 
 .result-actions {
     margin-left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .btn-sm {
