@@ -3,6 +3,8 @@ class BackgroundService {
     constructor() {
         this.alarmName = 'stockPriceCheck';
         this.setupEventListeners();
+        // 扩展启动时立即加载侧边栏设置
+        this.loadSidePanelSettings();
     }
 
     setupEventListeners() {
@@ -10,6 +12,13 @@ class BackgroundService {
         chrome.runtime.onInstalled.addListener((details) => {
             console.log('Stocks 扩展已安装');
             this.setupAlarms();
+            this.setupDefaultSidePanel();
+        });
+
+        // 扩展启动时
+        chrome.runtime.onStartup.addListener(() => {
+            console.log('Stocks 扩展已启动');
+            this.loadSidePanelSettings();
         });
 
         // 处理通知点击
@@ -40,6 +49,54 @@ class BackgroundService {
             delayInMinutes: 1,
             periodInMinutes: 5
         });
+    }
+
+    async setupDefaultSidePanel() {
+        try {
+            // 默认禁用侧边栏
+            await chrome.sidePanel.setOptions({
+                enabled: false
+            });
+            await chrome.sidePanel.setPanelBehavior({ 
+                openPanelOnActionClick: false 
+            });
+            console.log('侧边栏默认已禁用');
+        } catch (error) {
+            console.error('设置默认侧边栏失败:', error);
+        }
+    }
+
+    async loadSidePanelSettings() {
+        try {
+            // 获取用户的侧边栏设置
+            const result = await chrome.storage.sync.get(['enableSitebar']);
+            const enableSitebar = result.enableSitebar || false;
+            
+            console.log('加载侧边栏设置:', enableSitebar);
+            
+            if (enableSitebar) {
+                // 启用侧边栏
+                await chrome.sidePanel.setOptions({
+                    path: 'popup.html',
+                    enabled: true
+                });
+                await chrome.sidePanel.setPanelBehavior({ 
+                    openPanelOnActionClick: true 
+                });
+                console.log('侧边栏已根据设置启用');
+            } else {
+                // 禁用侧边栏
+                await chrome.sidePanel.setOptions({
+                    enabled: false
+                });
+                await chrome.sidePanel.setPanelBehavior({ 
+                    openPanelOnActionClick: false 
+                });
+                console.log('侧边栏已根据设置禁用');
+            }
+        } catch (error) {
+            console.error('加载侧边栏设置失败:', error);
+        }
     }
 
     async checkPriceAlerts() {
@@ -143,6 +200,48 @@ class BackgroundService {
                 try {
                     const value = await this.getPortfolioValue();
                     sendResponse({ success: true, value });
+                } catch (error) {
+                    sendResponse({ success: false, error: error.message });
+                }
+                break;
+
+            case 'openSidePanel':
+                try {
+                    await chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT });
+                    sendResponse({ success: true });
+                } catch (error) {
+                    sendResponse({ success: false, error: error.message });
+                }
+                break;
+
+            case 'enableSidePanel':
+                try {
+                    // 设置侧边栏路径
+                    await chrome.sidePanel.setOptions({
+                        path: 'popup.html',
+                        enabled: true
+                    });
+                    // 设置点击行为
+                    await chrome.sidePanel.setPanelBehavior({ 
+                        openPanelOnActionClick: true 
+                    });
+                    sendResponse({ success: true });
+                } catch (error) {
+                    sendResponse({ success: false, error: error.message });
+                }
+                break;
+
+            case 'disableSidePanel':
+                try {
+                    // 禁用侧边栏
+                    await chrome.sidePanel.setOptions({
+                        enabled: false
+                    });
+                    // 设置点击行为
+                    await chrome.sidePanel.setPanelBehavior({ 
+                        openPanelOnActionClick: false 
+                    });
+                    sendResponse({ success: true });
                 } catch (error) {
                     sendResponse({ success: false, error: error.message });
                 }

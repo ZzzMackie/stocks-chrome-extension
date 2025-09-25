@@ -8,10 +8,6 @@ class StockSitebar {
     }
 
     async init() {
-        // 检查是否启用网站侧边栏
-        const settings = await this.getSettings();
-        if (!settings.enableSitebar) return;
-
         this.createSitebar();
         this.detectStockSymbols();
         this.setupEventListeners();
@@ -21,7 +17,7 @@ class StockSitebar {
         return new Promise((resolve) => {
             chrome.storage.sync.get(['enableSitebar'], (result) => {
                 resolve({
-                    enableSitebar: result.enableSitebar !== false // 默认启用
+                    enableSitebar: result.enableSitebar === true // 只有明确设置为true才启用
                 });
             });
         });
@@ -434,10 +430,120 @@ class StockSitebar {
 }
 
 // 初始化网站侧边栏
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        new StockSitebar();
+async function initSitebar() {
+    console.log('Content script 初始化开始');
+    const settings = await new Promise((resolve) => {
+        chrome.storage.sync.get(['enableSitebar'], (result) => {
+            console.log('Content script 获取设置:', result);
+            resolve({
+                enableSitebar: result.enableSitebar === true
+            });
+        });
     });
+    
+    console.log('Content script 设置结果:', settings);
+    
+    if (settings.enableSitebar) {
+        console.log('Content script 创建侧边栏');
+        new StockSitebar();
+    } else {
+        console.log('Content script 侧边栏未启用');
+    }
+}
+
+console.log('Content script 加载完成，页面状态:', document.readyState);
+console.log('Content script 页面URL:', window.location.href);
+
+// 添加一个明显的测试元素
+const testDiv = document.createElement('div');
+testDiv.textContent = 'Content Script 已加载';
+testDiv.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 999999;
+    background: #ff0000;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+`;
+document.body.appendChild(testDiv);
+
+// 跳过扩展页面
+if (window.location.href.startsWith('chrome-extension://') || 
+    window.location.href.startsWith('moz-extension://') ||
+    window.location.href.startsWith('edge://') ||
+    window.location.href.startsWith('about:')) {
+    console.log('跳过扩展页面，不初始化侧边栏');
+    return;
+}
+
+// 添加一个测试按钮来手动触发侧边栏
+if (window.location.href.includes('test.fusenpack.com')) {
+    const testBtn = document.createElement('button');
+    testBtn.textContent = '测试侧边栏';
+    testBtn.style.cssText = `
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 999999;
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    `;
+    testBtn.onclick = () => {
+        console.log('手动测试侧边栏');
+        new StockSitebar();
+    };
+    document.body.appendChild(testBtn);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSitebar);
 } else {
-    new StockSitebar();
+    initSitebar();
+}
+
+// 监听设置变化
+chrome.storage.onChanged.addListener((changes, namespace) => {
+    console.log('Content script 收到存储变化:', { changes, namespace });
+    console.log('当前页面URL:', window.location.href);
+    
+    if (namespace === 'sync' && changes.enableSitebar) {
+        console.log('enableSitebar 设置变化:', changes.enableSitebar);
+        console.log('新值:', changes.enableSitebar.newValue);
+        console.log('旧值:', changes.enableSitebar.oldValue);
+        handleSitebarChange(changes.enableSitebar.newValue);
+    }
+});
+
+// 监听来自popup的消息
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('Content script 收到消息:', request);
+    
+    if (request.action === 'settingsChanged') {
+        console.log('收到设置更改通知:', request);
+        handleSitebarChange(request.enableSitebar);
+    }
+    
+    sendResponse({ success: true });
+});
+
+// 处理侧边栏显示/隐藏
+function handleSitebarChange(enableSitebar) {
+    console.log('处理侧边栏变化:', enableSitebar);
+    const sitebar = document.getElementById('stocks-sitebar');
+    
+    if (enableSitebar === true && !sitebar) {
+        console.log('启用侧边栏');
+        new StockSitebar();
+    } else if (enableSitebar === false && sitebar) {
+        console.log('禁用侧边栏');
+        sitebar.remove();
+    }
 }

@@ -25,6 +25,9 @@ class StocksApp {
         
         // 涨跌颜色配置
         this.colorScheme = 'red-up-green-down'; // 'red-up-green-down' 或 'green-up-red-down'
+        
+        // 侧边栏模式将在init中检测
+        this.isSidebarMode = false;
     }
 
     async init() {
@@ -33,6 +36,12 @@ class StocksApp {
             await this.apiService.init();
             await this.portfolioManager.init();
             await this.alertManager.init();
+
+            // 检测侧边栏模式
+            this.isSidebarMode = await this.detectSidebarMode();
+            
+            // 应用侧边栏模式样式
+            this.applySidebarMode();
 
             // 设置事件监听器
             this.setupEventListeners();
@@ -61,10 +70,8 @@ class StocksApp {
 
         // 颜色切换按钮
         const colorToggleBtn = document.getElementById('colorToggleBtn');
-        console.log('颜色切换按钮:', colorToggleBtn);
         if (colorToggleBtn) {
             colorToggleBtn.addEventListener('click', () => {
-                console.log('颜色切换按钮被点击');
                 this.toggleColorScheme();
             });
         } else {
@@ -339,16 +346,30 @@ class StocksApp {
                     if (!quote) return '';
 
                     return `
-                        <stock-card 
-                            symbol="${item.symbol}"
-                            price="${quote.price}"
-                            change="${quote.change}"
-                            change-percent="${quote.changePercent}"
-                        ></stock-card>
+                        <div class="watchlist-item">
+                            <stock-card 
+                                symbol="${item.symbol}"
+                                price="${quote.price}"
+                                change="${quote.change}"
+                                change-percent="${quote.changePercent}"
+                            ></stock-card>
+                            <button class="btn-icon btn-remove" data-action="remove-watchlist" data-symbol="${item.symbol}" title="从观察列表移除">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     `;
                 }).join('')}
             </div>
         `;
+        
+        // 添加删除按钮的事件监听器
+        const removeButtons = container.querySelectorAll('[data-action="remove-watchlist"]');
+        removeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const symbol = e.target.closest('[data-symbol]').dataset.symbol;
+                this.removeFromWatchlist(symbol);
+            });
+        });
     }
 
     async loadAlerts() {
@@ -518,6 +539,17 @@ class StocksApp {
         }
     }
 
+    async removeFromWatchlist(symbol) {
+        try {
+            await this.portfolioManager.removeFromWatchlist(symbol);
+            alert(`${symbol} 已从观察列表移除`);
+            this.loadWatchlist();
+        } catch (error) {
+            console.error('从观察列表移除失败:', error);
+            alert('移除失败: ' + error.message);
+        }
+    }
+
     async addToPortfolio(symbol) {
         try {
             // 检查是否已经在投资组合中
@@ -598,6 +630,8 @@ class StocksApp {
         const enableSitebarCheckbox = document.getElementById('enableSitebar');
 
         if (!rapidapiKeyInput || !refreshIntervalSelect || !enableNotificationsCheckbox || !enableSitebarCheckbox) {
+            console.error('保存设置失败: 找不到必要的DOM元素');
+            alert('保存设置失败: 找不到必要的DOM元素');
             return;
         }
 
@@ -606,20 +640,61 @@ class StocksApp {
         const enableNotifications = enableNotificationsCheckbox.checked;
         const enableSitebar = enableSitebarCheckbox.checked;
 
-        await new Promise((resolve) => {
-            chrome.storage.sync.set({
-                rapidapiKey,
-                refreshInterval,
-                enableNotifications,
-                enableSitebar
-            }, resolve);
-        });
+        try {
+            await new Promise((resolve) => {
+                chrome.storage.sync.set({
+                    rapidapiKey,
+                    refreshInterval,
+                    enableNotifications,
+                    enableSitebar
+                }, resolve);
+            });
 
-        this.apiService.rapidapiKey = rapidapiKey;
-        this.startAutoRefresh();
-        
-        this.hideModal('settingsModal');
-        alert('设置已保存');
+            
+            // 根据设置控制侧边栏
+            try {
+                if (enableSitebar) {
+                    await chrome.runtime.sendMessage({ action: 'enableSidePanel' });
+                    console.log('侧边栏已启用');
+                    
+                    // 更新本地状态
+                    this.isSidebarMode = true;
+                    this.applySidebarMode();
+                    
+                    // 启用侧边栏后，关闭popup并打开侧边栏
+                    setTimeout(async () => {
+                        try {
+                            await chrome.runtime.sendMessage({ action: 'openSidePanel' });
+                            window.close(); // 关闭popup弹窗
+                        } catch (error) {
+                            console.error('打开侧边栏失败:', error);
+                        }
+                    }, 100);
+                } else {
+                    await chrome.runtime.sendMessage({ action: 'disableSidePanel' });
+                    console.log('侧边栏已禁用');
+                    
+                    // 更新本地状态
+                    this.isSidebarMode = false;
+                    this.applySidebarMode();
+                }
+            } catch (error) {
+                console.error('设置侧边栏失败:', error);
+            }
+
+            this.apiService.rapidapiKey = rapidapiKey;
+            this.startAutoRefresh();
+            
+            this.hideModal('settingsModal');
+            
+            // 只有在启用侧边栏时才不显示alert（因为会自动切换到侧边栏）
+            if (!enableSitebar) {
+                alert('设置已保存');
+            }
+        } catch (error) {
+            console.error('保存设置失败:', error);
+            alert('保存设置失败: ' + error.message);
+        }
     }
 
     showAlertsModal() {
@@ -941,6 +1016,39 @@ class StocksApp {
                 detail: { colorScheme: this.colorScheme }
             }));
         }
+    }
+
+    // 检测是否在侧边栏模式
+    async detectSidebarMode() {
+        try {
+            // 根据用户设置判断是否在侧边栏模式
+            const settings = await this.apiService.getSettings();
+            const enableSitebar = settings.enableSitebar || false;
+            
+            console.log('根据设置检测侧边栏模式:', enableSitebar);
+            return enableSitebar;
+        } catch (error) {
+            console.error('检测侧边栏模式失败:', error);
+            return false;
+        }
+    }
+
+    // 应用侧边栏模式样式
+    applySidebarMode() {
+        if (this.isSidebarMode) {
+            document.body.classList.add('sidebar-mode');
+            console.log('已应用侧边栏模式样式');
+        } else {
+            document.body.classList.remove('sidebar-mode');
+            console.log('已应用弹窗模式样式');
+        }
+    }
+
+    // 手动切换侧边栏模式（用于调试）
+    toggleSidebarMode() {
+        this.isSidebarMode = !this.isSidebarMode;
+        this.applySidebarMode();
+        console.log('手动切换侧边栏模式:', this.isSidebarMode);
     }
 }
 

@@ -1,3 +1,21 @@
+/* CSS变量定义 */
+:root {
+    --app-width: 600px;
+    --app-min-height: 600px;
+    --app-border-radius: 12px;
+    --app-box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    --app-margin: 0;
+}
+
+/* 侧边栏模式变量 */
+.sidebar-mode {
+    --app-width: 100%;
+    --app-min-height: 100vh;
+    --app-border-radius: 0;
+    --app-box-shadow: none;
+    --app-margin: 0;
+}
+
 /* 全局样式 */
 * {
     margin: 0;
@@ -12,13 +30,45 @@ body {
     overflow-x: hidden;
 }
 
+/* 侧边栏模式下的body样式 */
+.sidebar-mode {
+    background: #f5f5f5;
+}
+
+.sidebar-mode body {
+    background: #f5f5f5;
+    margin: 0;
+    padding: 0;
+}
+
 .app {
-    width: 600px;
-    min-height: 600px;
+    width: var(--app-width);
+    min-height: var(--app-min-height);
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border-radius: var(--app-border-radius);
+    box-shadow: var(--app-box-shadow);
     overflow: hidden;
+    margin: var(--app-margin);
+}
+
+/* 侧边栏模式下的额外优化 */
+.sidebar-mode .app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-mode .content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.sidebar-mode .header {
+    flex-shrink: 0;
+}
+
+.sidebar-mode .tabs {
+    flex-shrink: 0;
 }
 
 /* 头部样式 */
@@ -214,6 +264,44 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding: 16px;
+}
+
+.watchlist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.watchlist-item stock-card {
+    flex: 1;
+}
+
+.watchlist-item .btn-remove {
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.watchlist-item .btn-remove:hover {
+    background: #ff3742;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.watchlist-item .btn-remove i {
+    font-size: 12px;
 }
 
 #watchlistList stock-card {
@@ -737,11 +825,14 @@ body {
 }
 
 .form-group label {
-    display: block;
+    display: flex;
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 6px;
     color: #333;
+}
+.form-group input[type="checkbox"] {
+    width: 50px;
 }
 
 .form-group input,

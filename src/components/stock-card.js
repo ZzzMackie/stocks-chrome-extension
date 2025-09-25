@@ -276,7 +276,6 @@ export class StockCard extends HTMLElement {
             return;
         }
         
-        console.log(`更新股票卡片颜色: ${this.stock.symbol}`);
         
         // 重新渲染以应用新的颜色方案
         this.render();
@@ -294,9 +293,6 @@ export class StockCard extends HTMLElement {
         const positiveColor = this.getChangeColor(true, app.colorScheme);
         const negativeColor = this.getChangeColor(false, app.colorScheme);
         const priceColor = isPositive ? positiveColor : negativeColor;
-        
-        console.log(`更新颜色变量: ${this.stock.symbol}, 涨跌: ${isPositive ? '涨' : '跌'}, 颜色方案: ${app.colorScheme}`);
-        console.log(`正色: ${positiveColor}, 负色: ${negativeColor}, 价格色: ${priceColor}`);
         
         // 更新CSS变量
         this.style.setProperty('--positive-color', positiveColor);
@@ -320,7 +316,6 @@ export class StockCard extends HTMLElement {
             changeIconElement.style.color = isPositive ? positiveColor : negativeColor;
         }
         
-        console.log(`直接样式更新完成: ${this.stock.symbol}`);
     }
 
     // 格式化价格显示，根据数值大小动态保留小数位

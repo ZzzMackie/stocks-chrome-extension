@@ -119,10 +119,12 @@ export class StockAPIService {
 
     async getSettings() {
         return new Promise((resolve) => {
-            chrome.storage.sync.get(['rapidapiKey', 'refreshInterval'], (result) => {
+            chrome.storage.sync.get(['rapidapiKey', 'refreshInterval', 'enableNotifications', 'enableSitebar'], (result) => {
                 resolve({
                     rapidapiKey: result.rapidapiKey || '',
-                    refreshInterval: result.refreshInterval || 60
+                    refreshInterval: result.refreshInterval || 60,
+                    enableNotifications: result.enableNotifications || false,
+                    enableSitebar: result.enableSitebar || false
                 });
             });
         });

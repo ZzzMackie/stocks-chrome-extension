@@ -8,7 +8,8 @@
     "alarms",
     "notifications",
     "activeTab",
-    "scripting"
+    "scripting",
+    "sidePanel"
   ],
   "host_permissions": [
     "https://query1.finance.yahoo.com/*",
@@ -32,13 +33,6 @@
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "css": ["content.css"]
-    }
-  ],
   "icons": {
     "16": "icons/icon16.svg",
     "32": "icons/icon32.svg",
