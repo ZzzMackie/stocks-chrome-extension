@@ -480,28 +480,6 @@ if (window.location.href.startsWith('chrome-extension://') ||
     return;
 }
 
-// 添加一个测试按钮来手动触发侧边栏
-if (window.location.href.includes('test.fusenpack.com')) {
-    const testBtn = document.createElement('button');
-    testBtn.textContent = '测试侧边栏';
-    testBtn.style.cssText = `
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        z-index: 999999;
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 5px;
-        cursor: pointer;
-    `;
-    testBtn.onclick = () => {
-        console.log('手动测试侧边栏');
-        new StockSitebar();
-    };
-    document.body.appendChild(testBtn);
-}
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSitebar);

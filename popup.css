@@ -43,6 +43,7 @@ body {
 
 .app {
     width: var(--app-width);
+    min-width: 400px;
     min-height: var(--app-min-height);
     background: white;
     border-radius: var(--app-border-radius);
@@ -69,6 +70,12 @@ body {
 
 .sidebar-mode .tabs {
     flex-shrink: 0;
+}
+
+.sidebar-mode .main-content {
+    max-height: calc(100vh - 160px);
+    flex: 1;
+    overflow-y: auto;
 }
 
 /* 头部样式 */
@@ -216,6 +223,9 @@ body {
 .main-content {
     padding: 20px;
     min-height: 400px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .tab-content {
@@ -753,6 +763,45 @@ body {
 .rate-update-time {
     font-size: 11px;
     color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.refresh-rate-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+    margin: 0 auto;
+}
+
+.refresh-rate-btn:hover {
+    background: #5a6fd8;
+    transform: translateY(-1px);
+}
+
+.refresh-rate-btn:active {
+    transform: translateY(0);
+}
+
+.refresh-rate-btn i {
+    font-size: 12px;
+}
+
+.refresh-rate-btn.loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* 模态框 */

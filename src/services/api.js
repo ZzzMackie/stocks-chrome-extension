@@ -492,4 +492,262 @@ export class StockAPIService {
             marketCap: quote.marketCap || null
         };
     }
+
+    // 获取货币汇率 - 使用 Yahoo Finance API
+    async getCurrencyRate(fromCurrency, toCurrency) {
+        try {
+            // 使用 Yahoo Finance 货币汇率 API
+            const symbol = `${fromCurrency}${toCurrency}=X`;
+            const url = `${this.yahooURL}/${symbol}?interval=1d&range=1d`;
+            console.log(`请求汇率API: ${url}`);
+            
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('汇率API响应:', data);
+            
+            if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+                throw new Error('未找到汇率数据');
+            }
+
+            const result = data.chart.result[0];
+            const meta = result.meta;
+            const quote = result.indicators.quote[0];
+            
+            // 获取最新汇率
+            const prices = quote.close.filter(price => price !== null);
+            const currentRate = prices[prices.length - 1] || meta.regularMarketPrice;
+            
+            console.log(`解析到的汇率: ${currentRate}`);
+            return parseFloat(currentRate.toFixed(4));
+        } catch (error) {
+            console.error('获取汇率失败:', error);
+            
+            // 如果 Yahoo Finance 失败，尝试使用 RapidAPI
+            if (this.rapidapiKey) {
+                console.log('尝试使用RapidAPI获取汇率');
+                return await this.getCurrencyRateRapidAPI(fromCurrency, toCurrency);
+            }
+            
+            throw new Error(`获取汇率失败: ${error.message}`);
+        }
+    }
+
+    // 备用货币汇率 API - RapidAPI
+    async getCurrencyRateRapidAPI(fromCurrency, toCurrency) {
+        try {
+            const url = `${this.rapidapiURL}/market/get-quotes?symbol=${fromCurrency}${toCurrency}=X`;
+            const response = await fetch(url, {
+                headers: {
+                    'X-RapidAPI-Key': this.rapidapiKey,
+                    'X-RapidAPI-Host': 'yahoo-finance15.p.rapidapi.com'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`RapidAPI HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (!data.body || data.body.length === 0) {
+                throw new Error('未找到汇率数据');
+            }
+
+            const quote = data.body[0];
+            return parseFloat(quote.regularMarketPrice.toFixed(4));
+        } catch (error) {
+            console.error('RapidAPI 汇率也失败了:', error);
+            throw new Error(`所有汇率 API 都失败了: ${error.message}`);
+        }
+    }
+
+    // 获取股票新闻
+    async getStockNews(symbol = 'AAPL', count = 10) {
+        try {
+            const url = `${this.yahooNewsURL}?q=${encodeURIComponent(symbol)}&quotesCount=0&newsCount=${count}`;
+            console.log(`请求新闻API: ${url}`);
+            
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('新闻API响应:', data);
+            
+            if (!data.news || data.news.length === 0) {
+                return [];
+            }
+
+            return data.news.map(news => ({
+                title: news.title,
+                summary: news.summary,
+                source: news.publisher,
+                publishedAt: news.providerPublishTime,
+                url: news.link || news.url || '#',
+                thumbnail: news.thumbnail?.resolutions?.[0]?.url || null
+            }));
+        } catch (error) {
+            console.error('获取新闻失败:', error);
+            throw new Error(`获取新闻失败: ${error.message}`);
+        }
+    }
+
+    // 获取市场新闻
+    async getMarketNews(count = 10) {
+        try {
+            const url = `${this.yahooNewsURL}?q=stock%20market&quotesCount=0&newsCount=${count}`;
+            console.log(`请求市场新闻API: ${url}`);
+            
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('市场新闻API响应:', data);
+            
+            if (!data.news || data.news.length === 0) {
+                return [];
+            }
+
+            return data.news.map(news => ({
+                title: news.title,
+                summary: news.summary,
+                source: news.publisher,
+                publishedAt: news.providerPublishTime,
+                url: news.link || news.url || '#',
+                thumbnail: news.thumbnail?.resolutions?.[0]?.url || null
+            }));
+        } catch (error) {
+            console.error('获取市场新闻失败:', error);
+            throw new Error(`获取市场新闻失败: ${error.message}`);
+        }
+    }
+
+    // 获取市场指数数据
+    async getMarketIndices() {
+        try {
+            // 定义主要市场指数
+            const indices = [
+                { symbol: '^DJI', name: '道琼斯', nameEn: 'Dow Jones' },
+                { symbol: '^GSPC', name: '标普500', nameEn: 'S&P 500' },
+                { symbol: '^IXIC', name: '纳斯达克', nameEn: 'NASDAQ' },
+                { symbol: '^HSI', name: '恒生指数', nameEn: 'Hang Seng' },
+                { symbol: '000001.SS', name: '上证指数', nameEn: 'Shanghai Composite' },
+                { symbol: '399001.SZ', name: '深证成指', nameEn: 'Shenzhen Component' },
+                { symbol: '^FTSE', name: '富时100', nameEn: 'FTSE 100' },
+                { symbol: '^N225', name: '日经225', nameEn: 'Nikkei 225' }
+            ];
+
+            const results = [];
+            
+            for (const index of indices) {
+                try {
+                    console.log(`正在获取${index.name}(${index.symbol})数据...`);
+                    const data = await this.getStockQuoteYahooV8(index.symbol);
+                    console.log(`${index.name}数据:`, data);
+                    results.push({
+                        ...index,
+                        price: data.price,
+                        change: data.change,
+                        changePercent: data.changePercent,
+                        marketState: data.marketState
+                    });
+                } catch (error) {
+                    console.warn(`获取${index.name}数据失败:`, error);
+                    results.push({
+                        ...index,
+                        price: null,
+                        change: null,
+                        changePercent: null,
+                        marketState: 'UNKNOWN'
+                    });
+                }
+            }
+
+            return results;
+        } catch (error) {
+            console.error('获取市场指数失败:', error);
+            throw new Error(`获取市场指数失败: ${error.message}`);
+        }
+    }
+
+    // 获取交易所状态
+    async getExchangeStatus() {
+        try {
+            const exchanges = [
+                { symbol: '^DJI', name: '纽约证券交易所', timezone: 'America/New_York' },
+                { symbol: '^IXIC', name: '纳斯达克', timezone: 'America/New_York' },
+                { symbol: '^HSI', name: '香港交易所', timezone: 'Asia/Hong_Kong' },
+                { symbol: '000001.SS', name: '上海证券交易所', timezone: 'Asia/Shanghai' },
+                { symbol: '399001.SZ', name: '深圳证券交易所', timezone: 'Asia/Shanghai' },
+                { symbol: '^FTSE', name: '伦敦证券交易所', timezone: 'Europe/London' },
+                { symbol: '^N225', name: '东京证券交易所', timezone: 'Asia/Tokyo' }
+            ];
+
+            const results = [];
+            
+            for (const exchange of exchanges) {
+                try {
+                    const data = await this.getStockQuoteYahooV8(exchange.symbol);
+                    results.push({
+                        name: exchange.name,
+                        status: this.getMarketStatus(data.marketState),
+                        timezone: exchange.timezone
+                    });
+                } catch (error) {
+                    console.warn(`获取${exchange.name}状态失败:`, error);
+                    results.push({
+                        name: exchange.name,
+                        status: '未知',
+                        timezone: exchange.timezone
+                    });
+                }
+            }
+
+            return results;
+        } catch (error) {
+            console.error('获取交易所状态失败:', error);
+            throw new Error(`获取交易所状态失败: ${error.message}`);
+        }
+    }
+
+    // 获取市场状态文本
+    getMarketStatus(marketState) {
+        switch (marketState) {
+            case 'REGULAR':
+                return '开市';
+            case 'PRE':
+                return '盘前';
+            case 'POST':
+                return '盘后';
+            case 'CLOSED':
+                return '休市';
+            default:
+                return '未知';
+        }
+    }
 }
