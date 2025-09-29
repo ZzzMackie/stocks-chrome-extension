@@ -76,13 +76,6 @@
 
 ## ⚙️ 配置说明
 
-### API 密钥设置
-
-1. 点击扩展图标打开主界面
-2. 点击右上角的设置按钮
-3. 输入您的 Alpha Vantage API 密钥
-4. 获取免费 API 密钥：[Alpha Vantage](https://www.alphavantage.co/support/#api-key)
-
 ### 功能配置
 
 - **刷新间隔**：设置数据刷新频率（30秒 - 10分钟）
