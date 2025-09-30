@@ -89,7 +89,7 @@ class I18nManager {
             languageSwitcher.id = 'languageSwitcher';
             languageSwitcher.className = 'language-switcher';
             languageSwitcher.innerHTML = `
-                <button class="btn-icon" id="languageBtn" title="切换语言">
+                <button class="btn-icon language-text" id="languageBtn" title="切换语言">
                     <span id="currentLanguageFlag">🇨🇳</span>
                 </button>
                 <div class="language-dropdown" id="languageDropdown" style="display: none;">

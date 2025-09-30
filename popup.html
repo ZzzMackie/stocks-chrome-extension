@@ -1,14 +1,14 @@
-<<<<<<< Updated upstream
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:* https://unpkg.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock assistant</title>
+    <title data-i18n="appName">Stock assistant</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="popup.css">
     <script src="lightweight-charts.standalone.production.js"></script>
+    <script src="i18n.js"></script>
 </head>
 <body>
     <div class="app">
@@ -20,14 +20,14 @@
                     <span>Stocks</span>
                 </div>
                 <div class="header-actions">
-                    <div class="market-status" id="marketStatus">❓ 状态未知</div>
+                    <div class="market-status" id="marketStatus" data-i18n="statusUnknown">❓ 状态未知</div>
                     <button class="btn-icon" id="colorToggleBtn" title="切换涨跌颜色">
                         <i class="fas fa-palette"></i>
                     </button>
-                    <button class="btn-icon" id="settingsBtn" title="设置">
+                    <button class="btn-icon" id="settingsBtn" data-i18n="settings" title="设置">
                         <i class="fas fa-cog"></i>
                     </button>
-                    <button class="btn-icon" id="refreshBtn" title="刷新">
+                    <button class="btn-icon" id="refreshBtn" data-i18n="refresh" title="刷新">
                         <i class="fas fa-sync-alt"></i>
                     </button>
                 </div>
@@ -38,7 +38,7 @@
         <div class="search-section">
             <div class="search-container">
                 <i class="fas fa-search search-icon"></i>
-                <input type="text" id="stockSearch" placeholder="搜索股票、ETF、加密货币..." class="search-input">
+                <input type="text" id="stockSearch" data-i18n="searchPlaceholder" placeholder="搜索股票、ETF、加密货币..." class="search-input">
                 <button class="search-btn" id="searchBtn">
                     <i class="fas fa-search"></i>
                 </button>
@@ -49,23 +49,23 @@
         <div class="tabs">
             <button class="tab active" data-tab="portfolio">
                 <i class="fas fa-briefcase"></i>
-                <span>投资组合</span>
+                <span data-i18n="portfolio">投资组合</span>
             </button>
             <button class="tab" data-tab="watchlist">
                 <i class="fas fa-eye"></i>
-                <span>观察列表</span>
+                <span data-i18n="watchlist">观察列表</span>
             </button>
             <button class="tab" data-tab="news">
                 <i class="fas fa-newspaper"></i>
-                <span>新闻</span>
+                <span data-i18n="news">新闻</span>
             </button>
             <button class="tab" data-tab="markets">
                 <i class="fas fa-globe"></i>
-                <span>市场</span>
+                <span data-i18n="markets">市场</span>
             </button>
             <button class="tab" data-tab="alerts">
                 <i class="fas fa-bell"></i>
-                <span>提醒</span>
+                <span data-i18n="alerts">提醒</span>
             </button>
         </div>
 
@@ -75,12 +75,12 @@
             <div class="tab-content active" id="portfolio-tab">
                 <div class="portfolio-summary">
                     <div class="summary-card">
-                        <div class="summary-label">总价值</div>
+                        <div class="summary-label" data-i18n="totalValue">总价值</div>
                         <div class="summary-value" id="totalValue">$0.00</div>
                         <div class="summary-change" id="totalChange">+$0.00 (0.00%)</div>
                     </div>
                     <div class="summary-card">
-                        <div class="summary-label">今日收益</div>
+                        <div class="summary-label" data-i18n="todayGain">今日收益</div>
                         <div class="summary-value" id="todayGain">$0.00</div>
                         <div class="summary-change" id="todayChange">+0.00%</div>
                     </div>
@@ -89,8 +89,8 @@
                 <div class="portfolio-list" id="portfolioList">
                     <div class="empty-state">
                         <i class="fas fa-plus-circle"></i>
-                        <p>添加股票到您的投资组合</p>
-                        <button class="btn-primary" id="addStockBtn">添加股票</button>
+                        <p data-i18n="addStockToPortfolio">添加股票到您的投资组合</p>
+                        <button class="btn-primary" id="addStockBtn" data-i18n="addStock">添加股票</button>
                     </div>
                 </div>
             </div>
@@ -100,8 +100,8 @@
                 <div class="watchlist-list" id="watchlistList">
                     <div class="empty-state">
                         <i class="fas fa-eye"></i>
-                        <p>添加股票到观察列表</p>
-                        <button class="btn-primary" id="addWatchlistBtn">添加股票</button>
+                        <p data-i18n="addStockToWatchlist">添加股票到观察列表</p>
+                        <button class="btn-primary" id="addWatchlistBtn" data-i18n="addStock">添加股票</button>
                     </div>
                 </div>
             </div>
@@ -111,7 +111,7 @@
                 <div class="news-list" id="newsList">
                     <div class="loading">
                         <i class="fas fa-spinner fa-spin"></i>
-                        <p>加载新闻中...</p>
+                        <p data-i18n="loadingNews">加载新闻中...</p>
                     </div>
                 </div>
             </div>
@@ -121,39 +121,39 @@
                 <div class="market-overview">
                     <div class="market-indices">
                         <div class="index-card">
-                            <div class="index-name">道琼斯</div>
+                            <div class="index-name" data-i18n="dowJones">道琼斯</div>
                             <div class="index-value" id="dowValue">-</div>
                             <div class="index-change" id="dowChange">-</div>
                         </div>
                         <div class="index-card">
-                            <div class="index-name">标普500</div>
+                            <div class="index-name" data-i18n="sp500">标普500</div>
                             <div class="index-value" id="sp500Value">-</div>
                             <div class="index-change" id="sp500Change">-</div>
                         </div>
                         <div class="index-card">
-                            <div class="index-name">纳斯达克</div>
+                            <div class="index-name" data-i18n="nasdaq">纳斯达克</div>
                             <div class="index-value" id="nasdaqValue">-</div>
                             <div class="index-change" id="nasdaqChange">-</div>
                         </div>
                     </div>
                     
                     <div class="market-hours">
-                        <h3>市场开放时间</h3>
+                        <h3 data-i18n="marketHours">市场开放时间</h3>
                         <div class="hours-list" id="marketHours">
                             <div class="hour-item">
-                                <span class="market-name">纽约证券交易所</span>
+                                <span class="market-name" data-i18n="nyse">纽约证券交易所</span>
                                 <span class="market-status" id="nyseStatus">-</span>
                             </div>
                             <div class="hour-item">
-                                <span class="market-name">纳斯达克</span>
+                                <span class="market-name" data-i18n="nasdaq">纳斯达克</span>
                                 <span class="market-status" id="nasdaqStatus">-</span>
                             </div>
                             <div class="hour-item">
-                                <span class="market-name">伦敦证券交易所</span>
+                                <span class="market-name" data-i18n="lse">伦敦证券交易所</span>
                                 <span class="market-status" id="lseStatus">-</span>
                             </div>
                             <div class="hour-item">
-                                <span class="market-name">东京证券交易所</span>
+                                <span class="market-name" data-i18n="tse">东京证券交易所</span>
                                 <span class="market-status" id="tseStatus">-</span>
                             </div>
                         </div>
@@ -166,8 +166,8 @@
                 <div class="alerts-list" id="alertsContent">
                     <div class="empty-state">
                         <i class="fas fa-bell"></i>
-                        <h3>没有价格提醒</h3>
-                        <p>设置价格提醒来监控股票价格变化</p>
+                        <h3 data-i18n="noAlerts">没有价格提醒</h3>
+                        <p data-i18n="setAlertsPrompt">设置价格提醒来监控股票价格变化</p>
                     </div>
                 </div>
             </div>
@@ -175,7 +175,7 @@
 
         <!-- 货币转换器 -->
         <div class="currency-converter" id="currencyConverter">
-            <h3>货币转换</h3>
+            <h3 data-i18n="currencyConverter">货币转换</h3>
             <div class="currency-switch">
                 <button class="currency-btn active" data-currency="USD">
                     <span class="currency-symbol">$</span>
@@ -352,340 +352,4 @@
     </div>
     <script type="module" src="src/app.js"></script>
 </body>
-=======
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:* https://unpkg.com;">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="appName">Stock assistant</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="popup.css">
-    <script src="lightweight-charts.standalone.production.js"></script>
-    <script src="i18n.js"></script>
-    
-</head>
-<body>
-    <div class="app">
-        <!-- 头部 -->
-        <header class="header">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Stocks</span>
-                </div>
-                <div class="header-actions">
-                    <div class="market-status" id="marketStatus" data-i18n="statusUnknown">❓ 状态未知</div>
-                    <button class="btn-icon" id="settingsBtn" data-i18n="settings" title="设置">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                    <button class="btn-icon" id="refreshBtn" data-i18n="refresh" title="刷新">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- 搜索栏 -->
-        <div class="search-section">
-            <div class="search-container">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="stockSearch" data-i18n="searchPlaceholder" placeholder="搜索股票、ETF、加密货币..." class="search-input">
-                <button class="search-btn" id="searchBtn">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- 标签页 -->
-        <div class="tabs">
-            <button class="tab active" data-tab="portfolio">
-                <i class="fas fa-briefcase"></i>
-                <span data-i18n="portfolio">投资组合</span>
-            </button>
-            <button class="tab" data-tab="watchlist">
-                <i class="fas fa-eye"></i>
-                <span data-i18n="watchlist">观察列表</span>
-            </button>
-            <button class="tab" data-tab="news">
-                <i class="fas fa-newspaper"></i>
-                <span data-i18n="news">新闻</span>
-            </button>
-            <button class="tab" data-tab="markets">
-                <i class="fas fa-globe"></i>
-                <span data-i18n="markets">市场</span>
-            </button>
-        </div>
-
-        <!-- 主要内容区域 -->
-        <main class="main-content">
-            <!-- 投资组合标签页 -->
-            <div class="tab-content active" id="portfolio-tab">
-                <div class="portfolio-summary">
-                    <div class="summary-card">
-                        <div class="summary-label" data-i18n="totalValue">总价值</div>
-                        <div class="summary-value" id="totalValue">$0.00</div>
-                        <div class="summary-change" id="totalChange">+$0.00 (0.00%)</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-label" data-i18n="todayGain">今日收益</div>
-                        <div class="summary-value" id="todayGain">$0.00</div>
-                        <div class="summary-change" id="todayChange">+0.00%</div>
-                    </div>
-                </div>
-                
-                <div class="portfolio-list" id="portfolioList">
-                    <div class="empty-state">
-                        <i class="fas fa-plus-circle"></i>
-                        <p data-i18n="addStockToPortfolio">添加股票到您的投资组合</p>
-                        <button class="btn-primary" id="addStockBtn" data-i18n="addStock">添加股票</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 观察列表标签页 -->
-            <div class="tab-content" id="watchlist-tab">
-                <div class="watchlist-list" id="watchlistList">
-                    <div class="empty-state">
-                        <i class="fas fa-eye"></i>
-                        <p data-i18n="addStockToWatchlist">添加股票到观察列表</p>
-                        <button class="btn-primary" id="addWatchlistBtn" data-i18n="addStock">添加股票</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 新闻标签页 -->
-            <div class="tab-content" id="news-tab">
-                <div class="news-list" id="newsList">
-                    <div class="loading">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p data-i18n="loadingNews">加载新闻中...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 市场标签页 -->
-            <div class="tab-content" id="markets-tab">
-                <div class="market-overview">
-                    <div class="market-indices">
-                        <div class="index-card">
-                            <div class="index-name" data-i18n="dowJones">道琼斯</div>
-                            <div class="index-value" id="dowValue">-</div>
-                            <div class="index-change" id="dowChange">-</div>
-                        </div>
-                        <div class="index-card">
-                            <div class="index-name" data-i18n="sp500">标普500</div>
-                            <div class="index-value" id="sp500Value">-</div>
-                            <div class="index-change" id="sp500Change">-</div>
-                        </div>
-                        <div class="index-card">
-                            <div class="index-name" data-i18n="nasdaq">纳斯达克</div>
-                            <div class="index-value" id="nasdaqValue">-</div>
-                            <div class="index-change" id="nasdaqChange">-</div>
-                        </div>
-                    </div>
-                    
-                    <div class="market-hours">
-                        <h3 data-i18n="marketHours">市场开放时间</h3>
-                        <div class="hours-list" id="marketHours">
-                            <div class="hour-item">
-                                <span class="market-name" data-i18n="nyse">纽约证券交易所</span>
-                                <span class="market-status" id="nyseStatus">-</span>
-                            </div>
-                            <div class="hour-item">
-                                <span class="market-name" data-i18n="nasdaq">纳斯达克</span>
-                                <span class="market-status" id="nasdaqStatus">-</span>
-                            </div>
-                            <div class="hour-item">
-                                <span class="market-name" data-i18n="lse">伦敦证券交易所</span>
-                                <span class="market-status" id="lseStatus">-</span>
-                            </div>
-                            <div class="hour-item">
-                                <span class="market-name" data-i18n="tse">东京证券交易所</span>
-                                <span class="market-status" id="tseStatus">-</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- 货币转换器 -->
-        <div class="currency-converter" id="currencyConverter">
-            <h3 data-i18n="currencyConverter">货币转换</h3>
-            <div class="currency-switch">
-                <button class="currency-btn active" data-currency="USD">
-                    <span class="currency-symbol">$</span>
-                    <span class="currency-code">USD</span>
-                </button>
-                <button class="currency-swap-btn" id="currencySwapBtn">
-                    <i class="fas fa-exchange-alt"></i>
-                </button>
-                <button class="currency-btn" data-currency="CNY">
-                    <span class="currency-symbol">¥</span>
-                    <span class="currency-code">CNY</span>
-                </button>
-            </div>
-            <div class="converter-form">
-                <div class="input-group">
-                    <input type="number" id="amount" data-i18n="amount" placeholder="金额" value="1" step="0.01">
-                    <div class="currency-display" id="fromCurrencyDisplay">USD</div>
-                </div>
-                <div class="conversion-arrow">
-                    <i class="fas fa-arrow-down"></i>
-                </div>
-                <div class="input-group">
-                    <input type="number" id="convertedAmount" readonly data-i18n="conversionResult" placeholder="转换结果">
-                    <div class="currency-display" id="toCurrencyDisplay">CNY</div>
-                </div>
-            </div>
-            <div class="conversion-info">
-                <div class="conversion-rate" id="conversionRate" data-i18n="gettingExchangeRate">获取汇率中...</div>
-                <div class="rate-update-time" id="rateUpdateTime"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 股票详情模态框 -->
-    <div class="modal" id="stockModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle" data-i18n="stockDetails">股票详情</h2>
-                <button class="modal-close" id="modalClose">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- 股票详情内容 -->
-            </div>
-        </div>
-    </div>
-
-    <!-- 添加股票模态框 -->
-    <div class="modal" id="addStockModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 data-i18n="addStock">添加股票</h2>
-                <button class="modal-close" id="addStockModalClose">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="stockSymbol" data-i18n="stockSymbol">股票代码</label>
-                    <input type="text" id="stockSymbol" data-i18n="stockSymbolPlaceholder" placeholder="例如: AAPL, TSLA, BTC-USD">
-                </div>
-                <div class="form-group">
-                    <label for="stockQuantity" data-i18n="quantity">数量</label>
-                    <input type="number" id="stockQuantity" data-i18n="quantityPlaceholder" placeholder="持有数量" value="1">
-                </div>
-                <div class="form-group">
-                    <label for="stockPrice" data-i18n="purchasePrice">购买价格</label>
-                    <input type="number" id="stockPrice" data-i18n="purchasePricePlaceholder" placeholder="购买价格" step="0.01">
-                </div>
-                <div class="form-group">
-                    <label for="addToPortfolio" data-i18n="addTo">添加到</label>
-                    <select id="addToPortfolio">
-                        <option value="portfolio" data-i18n="portfolio">投资组合</option>
-                        <option value="watchlist" data-i18n="watchlist">观察列表</option>
-                    </select>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn-secondary" id="cancelAddStock" data-i18n="cancel">取消</button>
-                    <button class="btn-primary" id="confirmAddStock" data-i18n="confirm">添加</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 设置模态框 -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 data-i18n="settings">设置</h2>
-                <button class="modal-close" id="settingsModalClose">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="rapidapiKey" data-i18n="rapidapiKey">RapidAPI 密钥 (可选)</label>
-                    <input type="password" id="rapidapiKey" data-i18n="rapidapiKeyPlaceholder" placeholder="输入您的 RapidAPI 密钥 (备用 API)">
-                    <small data-i18n="rapidapiKeyHelp">获取 RapidAPI 密钥: <a href="https://rapidapi.com/hub" target="_blank">RapidAPI</a> | 主要使用免费的 Yahoo Finance API</small>
-                </div>
-                <div class="form-group">
-                    <label for="refreshInterval" data-i18n="refreshInterval">刷新间隔 (秒)</label>
-                    <select id="refreshInterval">
-                        <option value="30" data-i18n="seconds30">30 秒</option>
-                        <option value="60" selected data-i18n="minutes1">1 分钟</option>
-                        <option value="300" data-i18n="minutes5">5 分钟</option>
-                        <option value="600" data-i18n="minutes10">10 分钟</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="enableNotifications"> <span data-i18n="enableNotifications">启用价格提醒通知</span>
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="enableSitebar"> <span data-i18n="enableSitebar">启用网站侧边栏</span>
-                    </label>
-                </div>
-                <div class="form-group">
-                    <button class="btn-primary" id="manageAlertsBtn" data-i18n="manageAlerts">管理价格提醒</button>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn-secondary" id="cancelSettings" data-i18n="cancel">取消</button>
-                    <button class="btn-primary" id="saveSettings" data-i18n="save">保存</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 价格提醒管理模态框 -->
-    <div class="modal" id="alertsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 data-i18n="manageAlerts">管理价格提醒</h2>
-                <button class="modal-close" id="alertsModalClose">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="alerts-section">
-                    <div class="form-group">
-                        <label for="alertSymbol" data-i18n="stockSymbol">股票代码</label>
-                        <input type="text" id="alertSymbol" data-i18n="alertSymbolPlaceholder" placeholder="例如: AAPL">
-                    </div>
-                    <div class="form-group">
-                        <label for="alertPrice" data-i18n="targetPrice">目标价格</label>
-                        <input type="number" id="alertPrice" data-i18n="targetPricePlaceholder" placeholder="目标价格" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="alertCondition" data-i18n="alertCondition">提醒条件</label>
-                        <select id="alertCondition">
-                            <option value="above" data-i18n="above">上涨至</option>
-                            <option value="below" data-i18n="below">下跌至</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <button class="btn-primary" id="addAlertBtn" data-i18n="addAlert">添加提醒</button>
-                    </div>
-                </div>
-                
-                <div class="alerts-list" id="alertsList">
-                    <div class="empty-state">
-                        <i class="fas fa-bell"></i>
-                        <p data-i18n="noAlerts">暂无价格提醒</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="popup.js"></script>
-</body>
->>>>>>> Stashed changes
 </html>
