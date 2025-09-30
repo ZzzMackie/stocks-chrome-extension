@@ -1,0 +1,230 @@
+{
+  "appName": {
+    "message": "股票投资助手",
+    "description": "应用名称"
+  },
+  "appDescription": {
+    "message": "提供股票、加密货币、ETF、新闻和全球市场数据的实时报价，随时随地都能获取。",
+    "description": "应用描述"
+  },
+  "settings": {
+    "message": "设置",
+    "description": "设置按钮标题"
+  },
+  "refresh": {
+    "message": "刷新",
+    "description": "刷新按钮标题"
+  },
+  "statusUnknown": {
+    "message": "状态未知",
+    "description": "市场状态未知"
+  },
+  "searchPlaceholder": {
+    "message": "搜索股票、ETF、加密货币...",
+    "description": "搜索框占位符"
+  },
+  "portfolio": {
+    "message": "投资组合",
+    "description": "投资组合标签页"
+  },
+  "watchlist": {
+    "message": "观察列表",
+    "description": "观察列表标签页"
+  },
+  "news": {
+    "message": "新闻",
+    "description": "新闻标签页"
+  },
+  "markets": {
+    "message": "市场",
+    "description": "市场标签页"
+  },
+  "totalValue": {
+    "message": "总价值",
+    "description": "总价值标签"
+  },
+  "todayGain": {
+    "message": "今日收益",
+    "description": "今日收益标签"
+  },
+  "addStockToPortfolio": {
+    "message": "添加股票到您的投资组合",
+    "description": "添加股票到投资组合提示"
+  },
+  "addStock": {
+    "message": "添加股票",
+    "description": "添加股票按钮"
+  },
+  "addStockToWatchlist": {
+    "message": "添加股票到观察列表",
+    "description": "添加股票到观察列表提示"
+  },
+  "loadingNews": {
+    "message": "加载新闻中...",
+    "description": "加载新闻提示"
+  },
+  "dowJones": {
+    "message": "道琼斯",
+    "description": "道琼斯指数"
+  },
+  "sp500": {
+    "message": "标普500",
+    "description": "标普500指数"
+  },
+  "nasdaq": {
+    "message": "纳斯达克",
+    "description": "纳斯达克指数"
+  },
+  "marketHours": {
+    "message": "市场开放时间",
+    "description": "市场开放时间标题"
+  },
+  "nyse": {
+    "message": "纽约证券交易所",
+    "description": "纽约证券交易所"
+  },
+  "lse": {
+    "message": "伦敦证券交易所",
+    "description": "伦敦证券交易所"
+  },
+  "tse": {
+    "message": "东京证券交易所",
+    "description": "东京证券交易所"
+  },
+  "currencyConverter": {
+    "message": "货币转换",
+    "description": "货币转换器标题"
+  },
+  "amount": {
+    "message": "金额",
+    "description": "金额输入框占位符"
+  },
+  "conversionResult": {
+    "message": "转换结果",
+    "description": "转换结果输入框占位符"
+  },
+  "gettingExchangeRate": {
+    "message": "获取汇率中...",
+    "description": "获取汇率提示"
+  },
+  "stockDetails": {
+    "message": "股票详情",
+    "description": "股票详情模态框标题"
+  },
+  "stockSymbol": {
+    "message": "股票代码",
+    "description": "股票代码标签"
+  },
+  "stockSymbolPlaceholder": {
+    "message": "例如: AAPL, TSLA, BTC-USD",
+    "description": "股票代码输入框占位符"
+  },
+  "quantity": {
+    "message": "数量",
+    "description": "数量标签"
+  },
+  "quantityPlaceholder": {
+    "message": "持有数量",
+    "description": "数量输入框占位符"
+  },
+  "purchasePrice": {
+    "message": "购买价格",
+    "description": "购买价格标签"
+  },
+  "purchasePricePlaceholder": {
+    "message": "购买价格",
+    "description": "购买价格输入框占位符"
+  },
+  "addTo": {
+    "message": "添加到",
+    "description": "添加到标签"
+  },
+  "cancel": {
+    "message": "取消",
+    "description": "取消按钮"
+  },
+  "confirm": {
+    "message": "添加",
+    "description": "确认添加按钮"
+  },
+  "rapidapiKey": {
+    "message": "RapidAPI 密钥 (可选)",
+    "description": "RapidAPI密钥标签"
+  },
+  "rapidapiKeyPlaceholder": {
+    "message": "输入您的 RapidAPI 密钥 (备用 API)",
+    "description": "RapidAPI密钥输入框占位符"
+  },
+  "rapidapiKeyHelp": {
+    "message": "获取 RapidAPI 密钥: RapidAPI | 主要使用免费的 Yahoo Finance API",
+    "description": "RapidAPI密钥帮助文本"
+  },
+  "refreshInterval": {
+    "message": "刷新间隔 (秒)",
+    "description": "刷新间隔标签"
+  },
+  "seconds30": {
+    "message": "30 秒",
+    "description": "30秒选项"
+  },
+  "minutes1": {
+    "message": "1 分钟",
+    "description": "1分钟选项"
+  },
+  "minutes5": {
+    "message": "5 分钟",
+    "description": "5分钟选项"
+  },
+  "minutes10": {
+    "message": "10 分钟",
+    "description": "10分钟选项"
+  },
+  "enableNotifications": {
+    "message": "启用价格提醒通知",
+    "description": "启用通知复选框"
+  },
+  "enableSitebar": {
+    "message": "启用网站侧边栏",
+    "description": "启用侧边栏复选框"
+  },
+  "manageAlerts": {
+    "message": "管理价格提醒",
+    "description": "管理提醒按钮"
+  },
+  "save": {
+    "message": "保存",
+    "description": "保存按钮"
+  },
+  "alertSymbolPlaceholder": {
+    "message": "例如: AAPL",
+    "description": "提醒股票代码占位符"
+  },
+  "targetPrice": {
+    "message": "目标价格",
+    "description": "目标价格标签"
+  },
+  "targetPricePlaceholder": {
+    "message": "目标价格",
+    "description": "目标价格输入框占位符"
+  },
+  "alertCondition": {
+    "message": "提醒条件",
+    "description": "提醒条件标签"
+  },
+  "above": {
+    "message": "上涨至",
+    "description": "上涨至选项"
+  },
+  "below": {
+    "message": "下跌至",
+    "description": "下跌至选项"
+  },
+  "addAlert": {
+    "message": "添加提醒",
+    "description": "添加提醒按钮"
+  },
+  "noAlerts": {
+    "message": "暂无价格提醒",
+    "description": "无提醒提示"
+  }
+}

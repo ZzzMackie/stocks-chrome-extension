@@ -1,0 +1,230 @@
+{
+  "appName": {
+    "message": "Stock Assistant",
+    "description": "Application name"
+  },
+  "appDescription": {
+    "message": "Provides real-time quotes for stocks, cryptocurrencies, ETFs, news and global market data, available anytime, anywhere.",
+    "description": "Application description"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Settings button title"
+  },
+  "refresh": {
+    "message": "Refresh",
+    "description": "Refresh button title"
+  },
+  "statusUnknown": {
+    "message": "Status Unknown",
+    "description": "Market status unknown"
+  },
+  "searchPlaceholder": {
+    "message": "Search stocks, ETFs, cryptocurrencies...",
+    "description": "Search box placeholder"
+  },
+  "portfolio": {
+    "message": "Portfolio",
+    "description": "Portfolio tab"
+  },
+  "watchlist": {
+    "message": "Watchlist",
+    "description": "Watchlist tab"
+  },
+  "news": {
+    "message": "News",
+    "description": "News tab"
+  },
+  "markets": {
+    "message": "Markets",
+    "description": "Markets tab"
+  },
+  "totalValue": {
+    "message": "Total Value",
+    "description": "Total value label"
+  },
+  "todayGain": {
+    "message": "Today's Gain",
+    "description": "Today's gain label"
+  },
+  "addStockToPortfolio": {
+    "message": "Add stocks to your portfolio",
+    "description": "Add stock to portfolio prompt"
+  },
+  "addStock": {
+    "message": "Add Stock",
+    "description": "Add stock button"
+  },
+  "addStockToWatchlist": {
+    "message": "Add stocks to watchlist",
+    "description": "Add stock to watchlist prompt"
+  },
+  "loadingNews": {
+    "message": "Loading news...",
+    "description": "Loading news prompt"
+  },
+  "dowJones": {
+    "message": "Dow Jones",
+    "description": "Dow Jones index"
+  },
+  "sp500": {
+    "message": "S&P 500",
+    "description": "S&P 500 index"
+  },
+  "nasdaq": {
+    "message": "NASDAQ",
+    "description": "NASDAQ index"
+  },
+  "marketHours": {
+    "message": "Market Hours",
+    "description": "Market hours title"
+  },
+  "nyse": {
+    "message": "New York Stock Exchange",
+    "description": "New York Stock Exchange"
+  },
+  "lse": {
+    "message": "London Stock Exchange",
+    "description": "London Stock Exchange"
+  },
+  "tse": {
+    "message": "Tokyo Stock Exchange",
+    "description": "Tokyo Stock Exchange"
+  },
+  "currencyConverter": {
+    "message": "Currency Converter",
+    "description": "Currency converter title"
+  },
+  "amount": {
+    "message": "Amount",
+    "description": "Amount input placeholder"
+  },
+  "conversionResult": {
+    "message": "Conversion Result",
+    "description": "Conversion result input placeholder"
+  },
+  "gettingExchangeRate": {
+    "message": "Getting exchange rate...",
+    "description": "Getting exchange rate prompt"
+  },
+  "stockDetails": {
+    "message": "Stock Details",
+    "description": "Stock details modal title"
+  },
+  "stockSymbol": {
+    "message": "Stock Symbol",
+    "description": "Stock symbol label"
+  },
+  "stockSymbolPlaceholder": {
+    "message": "e.g.: AAPL, TSLA, BTC-USD",
+    "description": "Stock symbol input placeholder"
+  },
+  "quantity": {
+    "message": "Quantity",
+    "description": "Quantity label"
+  },
+  "quantityPlaceholder": {
+    "message": "Holding quantity",
+    "description": "Quantity input placeholder"
+  },
+  "purchasePrice": {
+    "message": "Purchase Price",
+    "description": "Purchase price label"
+  },
+  "purchasePricePlaceholder": {
+    "message": "Purchase price",
+    "description": "Purchase price input placeholder"
+  },
+  "addTo": {
+    "message": "Add to",
+    "description": "Add to label"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel button"
+  },
+  "confirm": {
+    "message": "Add",
+    "description": "Confirm add button"
+  },
+  "rapidapiKey": {
+    "message": "RapidAPI Key (Optional)",
+    "description": "RapidAPI key label"
+  },
+  "rapidapiKeyPlaceholder": {
+    "message": "Enter your RapidAPI key (backup API)",
+    "description": "RapidAPI key input placeholder"
+  },
+  "rapidapiKeyHelp": {
+    "message": "Get RapidAPI key: RapidAPI | Mainly uses free Yahoo Finance API",
+    "description": "RapidAPI key help text"
+  },
+  "refreshInterval": {
+    "message": "Refresh Interval (seconds)",
+    "description": "Refresh interval label"
+  },
+  "seconds30": {
+    "message": "30 seconds",
+    "description": "30 seconds option"
+  },
+  "minutes1": {
+    "message": "1 minute",
+    "description": "1 minute option"
+  },
+  "minutes5": {
+    "message": "5 minutes",
+    "description": "5 minutes option"
+  },
+  "minutes10": {
+    "message": "10 minutes",
+    "description": "10 minutes option"
+  },
+  "enableNotifications": {
+    "message": "Enable price alert notifications",
+    "description": "Enable notifications checkbox"
+  },
+  "enableSitebar": {
+    "message": "Enable website sidebar",
+    "description": "Enable sidebar checkbox"
+  },
+  "manageAlerts": {
+    "message": "Manage Price Alerts",
+    "description": "Manage alerts button"
+  },
+  "save": {
+    "message": "Save",
+    "description": "Save button"
+  },
+  "alertSymbolPlaceholder": {
+    "message": "e.g.: AAPL",
+    "description": "Alert stock symbol placeholder"
+  },
+  "targetPrice": {
+    "message": "Target Price",
+    "description": "Target price label"
+  },
+  "targetPricePlaceholder": {
+    "message": "Target price",
+    "description": "Target price input placeholder"
+  },
+  "alertCondition": {
+    "message": "Alert Condition",
+    "description": "Alert condition label"
+  },
+  "above": {
+    "message": "Rise to",
+    "description": "Above option"
+  },
+  "below": {
+    "message": "Fall to",
+    "description": "Below option"
+  },
+  "addAlert": {
+    "message": "Add Alert",
+    "description": "Add alert button"
+  },
+  "noAlerts": {
+    "message": "No price alerts",
+    "description": "No alerts prompt"
+  }
+}
